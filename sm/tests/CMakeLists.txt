@@ -61,6 +61,9 @@ set(MOCK_SYMBOLS
      -Wl,--wrap=sanctum_sm_public_key \
      -Wl,--wrap=sanctum_sm_secret_key \
      -Wl,--wrap=sanctum_dev_public_key \
+     -Wl,--wrap=sanctum_falcon_pk \
+     -Wl,--wrap=sanctum_falcon_sk \
+     -Wl,--wrap=sanctum_falcon_sig \
      -Wl,--wrap=copy1_to_sm \
      -Wl,--wrap=copy_word_to_sm \
      -Wl,--wrap=copy_block_to_sm \

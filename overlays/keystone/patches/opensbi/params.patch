@@ -1,0 +1,66 @@
+--- a/firmware/fw_base.ldS	2024-01-30 18:16:44.405945492 +0100
++++ b/firmware/fw_base.ldS	2024-01-30 18:17:24.437732076 +0100
+@@ -99,17 +99,9 @@
+ 
+   /* ## manufacturer_keys : */
+ 
+-  /* 32 Bytes : manufacturer public key */
+-  PROVIDE( sanctum_m_public_key = . );
+-  . += 0x20;
+-
+   /* 32 Bytes : device public key */
+-  PROVIDE( sanctum_dev_public_key = . );
+-  . += 0x20;
+-
+-  /* 64 Bytes : device secret key */
+-  PROVIDE( sanctum_dev_secret_key = . );
+-  . += 0x40;
++  PROVIDE( sanctum_ECASM_priv = . );
++  . += 0x501;
+ 
+   /* ## security_monitor_keys : */
+ 
+@@ -119,12 +111,40 @@
+ 
+   /* 32 Bytes : security monitor public key */
+   PROVIDE( sanctum_sm_public_key = . );
+-  . += 0x20;
++  . += 0x381;
+ 
+   /* 64 Bytes : security monitor secret key */
+   PROVIDE( sanctum_sm_secret_key = . );
+-  . += 0x40;
++  . += 0x501;
+ 
+   /* 64 Bytes : security monitor's signature by device */
+   PROVIDE( sanctum_sm_signature = . );
+-  . += 0x40;
++  . += 0x329;
++
++/* 64 Bytes : Compound Device Identifier */
++PROVIDE( sanctum_CDI = . );
++. += 0x40;
++
++/* 512 Bytes : security monitor's certificate */
++PROVIDE( sanctum_cert_sm = . );
++. += 0x811;
++
++/* 512 Bytes : root certificate */
++PROVIDE( sanctum_cert_root = . );
++. += 0x75b;
++
++/* 512 Bytes : manufacturer certificate */
++PROVIDE( sanctum_cert_man = . );
++. += 0x76f;
++
++/* 4 Byte : certificate length */
++PROVIDE( sanctum_length_cert = . );
++. += 0x04;
++
++/* 4 Byte : root certificate length */
++PROVIDE( sanctum_length_cert_root = . );
++. += 0x04;
++
++/* 4 Byte : manufacturer certificate length */
++PROVIDE( sanctum_length_cert_man = . );
++. += 0x04;

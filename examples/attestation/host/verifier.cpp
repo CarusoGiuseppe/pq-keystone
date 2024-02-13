@@ -31,7 +31,7 @@ Verifier::run() {
 void
 Verifier::verify_report(Report& report, const std::string& nonce) {
   debug_verify(report, _sanctum_dev_public_key);
-
+   
   byte expected_enclave_hash[MDSIZE];
   compute_expected_enclave_hash(expected_enclave_hash);
 
@@ -87,7 +87,7 @@ Verifier::compute_expected_sm_hash(byte* expected_sm_hash) {
   // measuring is the same as the size of the SM buffer allocated by
   // the bootloader. See keystone/bootrom/bootloader.c for how it is
   // computed in the bootloader.
-  const size_t sanctum_sm_size = 0x1ff000;
+  const size_t sanctum_sm_size = 0x1fd000;
   std::vector<byte> sm_content(sanctum_sm_size, 0);
 
   {

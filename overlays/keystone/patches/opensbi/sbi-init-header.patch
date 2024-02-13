@@ -1,0 +1,16 @@
+--- a/include/sbi/sbi_init.h	2022-06-25 05:42:10.000000000 +0200
++++ b/include/sbi/sbi_init.h	2024-01-29 10:49:19.842163260 +0100
+@@ -14,10 +14,12 @@
+ 
+ struct sbi_scratch;
+ 
+-void __noreturn sbi_init(struct sbi_scratch *scratch);
++void __noreturn sbi_init(struct sbi_scratch *scratch, bool flag);
+ 
+ unsigned long sbi_init_count(u32 hartid);
+ 
+ void __noreturn sbi_exit(struct sbi_scratch *scratch);
+ 
++void to_be_stopped(struct sbi_scratch *scratch);
++
+ #endif

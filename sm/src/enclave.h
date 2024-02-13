@@ -13,11 +13,14 @@
 #include "pmp.h"
 #include "thread.h"
 #include "crypto.h"
+#include "x509custom_sm/x509custom.h"
+#include "falcon512_sm/my_string.h"
+#include "falcon512_sm/falcon.h"
 
 // Special target platform header, set by configure script
 #include TARGET_PLATFORM_HEADER
 
-#define ATTEST_DATA_MAXLEN  1024
+#define ATTEST_DATA_MAXLEN  20//1024
 #define ENCLAVE_REGIONS_MAX 8
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
@@ -71,8 +74,29 @@ struct enclave
 
   /* measurement */
   byte hash[MDSIZE];
-  byte sign[SIGNATURE_SIZE];
+  byte sign[FALCON_512_SIG_SIZE]; //SIGNATURE_SIZE
 
+  byte CDI[64]; 
+  byte local_att_pub[FALCON_512_PK_SIZE]; //32
+  byte local_att_priv[FALCON_512_SK_SIZE]; //64
+  /*
+  the falcon keygen stalls with the tmp allocated in the stack
+  */
+  //byte tmp[FALCON_TMPSIZE_KEYGEN(9)];
+  unsigned char cert_der[2100];
+  mbedtls_x509write_cert crt_local_att;
+  unsigned char crt_local_att_der[2037]; //512
+  int crt_local_att_der_length;
+  mbedtls_pk_context subj_key;
+  mbedtls_pk_context issu_key;
+
+ // byte pk_ldev[FALCON_512_PK_SIZE]; //32
+ // byte sk_ldev[FALCON_512_SK_SIZE]; //64
+/*
+  byte sk_array[2][FALCON_512_SK_SIZE]; //32-10
+  byte pk_array[2][FALCON_512_PK_SIZE]; //64-10
+  int n_keypair;
+*/
   /* parameters */
   struct runtime_va_params_t params;
   struct runtime_pa_params pa_params;
@@ -90,19 +114,19 @@ struct enclave_report
   byte hash[MDSIZE];
   uint64_t data_len;
   byte data[ATTEST_DATA_MAXLEN];
-  byte signature[SIGNATURE_SIZE];
+  byte signature[FALCON_512_SIG_SIZE]; //SIGNATURE_SIZE
 };
 struct sm_report
 {
   byte hash[MDSIZE];
-  byte public_key[PUBLIC_KEY_SIZE];
-  byte signature[SIGNATURE_SIZE];
+  byte public_key[FALCON_512_PK_SIZE]; //PUBLIC_KEY_SIZE
+  byte signature[FALCON_512_SIG_SIZE]; //SIGNATURE_SIZE
 };
 struct report
 {
   struct enclave_report enclave;
   struct sm_report sm;
-  byte dev_public_key[PUBLIC_KEY_SIZE];
+  //byte dev_public_key[FALCON_512_PK_SIZE]; //PUBLIC_KEY_SIZE
 };
 
 /* sealing key structure */
@@ -110,7 +134,7 @@ struct report
 struct sealing_key
 {
   uint8_t key[SEALING_KEY_SIZE];
-  uint8_t signature[SIGNATURE_SIZE];
+  uint8_t signature[FALCON_512_SIG_SIZE]; //SIGNATURE_SIZE
 };
 
 /*** SBI functions & external functions ***/
@@ -132,4 +156,9 @@ int get_enclave_region_index(enclave_id eid, enum enclave_region_type type);
 uintptr_t get_enclave_region_base(enclave_id eid, int memid);
 uintptr_t get_enclave_region_size(enclave_id eid, int memid);
 unsigned long get_sealing_key(uintptr_t seal_key, uintptr_t key_ident, size_t key_ident_size, enclave_id eid);
+/*
+unsigned long create_keypair(enclave_id eid, unsigned char* pk ,int seed_enc); //
+unsigned long get_cert_chain(unsigned char** certs, unsigned char* sizes); //
+unsigned long do_crypto_op(enclave_id eid, int flag, unsigned char* data, int data_len, unsigned char* out_data, int* len_out_data, unsigned char* pk); //
+*/
 #endif

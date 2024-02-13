@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 #include "ed25519/ed25519.h"
+#include "falcon512/falcon.h"
 
 using json11::Json;
 std::string
@@ -41,16 +42,16 @@ Report::fromJson(std::string jsonstr) {
   std::string err;
   const auto json = Json::parse(jsonstr, err);
 
-  std::string device_pubkey = json["device_pubkey"].string_value();
-  HexToBytes(report.dev_public_key, PUBLIC_KEY_SIZE, device_pubkey);
+  //std::string device_pubkey = json["device_pubkey"].string_value();
+  //HexToBytes(report.dev_public_key, FALCON_512_PK_SIZE, device_pubkey);
 
   std::string sm_hash = json["security_monitor"]["hash"].string_value();
   HexToBytes(report.sm.hash, MDSIZE, sm_hash);
   std::string sm_pubkey = json["security_monitor"]["pubkey"].string_value();
-  HexToBytes(report.sm.public_key, PUBLIC_KEY_SIZE, sm_pubkey);
+  HexToBytes(report.sm.public_key, FALCON_512_PK_SIZE, sm_pubkey);
   std::string sm_signature =
       json["security_monitor"]["signature"].string_value();
-  HexToBytes(report.sm.signature, SIGNATURE_SIZE, sm_signature);
+  HexToBytes(report.sm.signature, FALCON_512_SIG_SIZE, sm_signature);
 
   std::string enclave_hash = json["enclave"]["hash"].string_value();
   HexToBytes(report.enclave.hash, MDSIZE, enclave_hash);
@@ -58,11 +59,12 @@ Report::fromJson(std::string jsonstr) {
   std::string enclave_data = json["enclave"]["data"].string_value();
   HexToBytes(report.enclave.data, report.enclave.data_len, enclave_data);
   std::string enclave_signature = json["enclave"]["signature"].string_value();
-  HexToBytes(report.enclave.signature, SIGNATURE_SIZE, enclave_signature);
+  HexToBytes(report.enclave.signature, FALCON_512_SIG_SIZE, enclave_signature);
 }
 
 void
 Report::fromBytes(byte* bin) {
+  std::cout << "REPORT SIZE: " << sizeof(struct report_t) << std::endl;
   std::memcpy(&report, bin, sizeof(struct report_t));
 }
 
@@ -72,13 +74,13 @@ Report::stringfy() {
     return "{ \"error\" : \"invalid data length\" }";
   }
   auto json = Json::object{
-      {"device_pubkey", BytesToHex(report.dev_public_key, PUBLIC_KEY_SIZE)},
+      //{"device_pubkey", BytesToHex(report.dev_public_key, FALCON_512_PK_SIZE)},
       {
           "security_monitor",
           Json::object{
               {"hash", BytesToHex(report.sm.hash, MDSIZE)},
-              {"pubkey", BytesToHex(report.sm.public_key, PUBLIC_KEY_SIZE)},
-              {"signature", BytesToHex(report.sm.signature, SIGNATURE_SIZE)}},
+              {"pubkey", BytesToHex(report.sm.public_key, FALCON_512_PK_SIZE)},
+              {"signature", BytesToHex(report.sm.signature, FALCON_512_SIG_SIZE)}},
       },
       {
           "enclave",
@@ -88,7 +90,7 @@ Report::stringfy() {
               {"data",
                BytesToHex(report.enclave.data, report.enclave.data_len)},
               {"signature",
-               BytesToHex(report.enclave.signature, SIGNATURE_SIZE)},
+               BytesToHex(report.enclave.signature, FALCON_512_SIG_SIZE)},
           },
       },
   };
@@ -105,20 +107,20 @@ void
 Report::printPretty() {
   std::cout << "\t\t=== Security Monitor ===" << std::endl;
   std::cout << "Hash: " << BytesToHex(report.sm.hash, MDSIZE) << std::endl;
-  std::cout << "Pubkey: " << BytesToHex(report.sm.public_key, PUBLIC_KEY_SIZE)
+  std::cout << "Pubkey: " << BytesToHex(report.sm.public_key, FALCON_512_PK_SIZE)
             << std::endl;
-  std::cout << "Signature: " << BytesToHex(report.sm.signature, SIGNATURE_SIZE)
+  std::cout << "Signature: " << BytesToHex(report.sm.signature, FALCON_512_SIG_SIZE)
             << std::endl;
   std::cout << std::endl << "\t\t=== Enclave Application ===" << std::endl;
   std::cout << "Hash: " << BytesToHex(report.enclave.hash, MDSIZE) << std::endl;
   std::cout << "Signature: "
-            << BytesToHex(report.enclave.signature, SIGNATURE_SIZE)
+            << BytesToHex(report.enclave.signature, FALCON_512_SIG_SIZE)
             << std::endl;
   std::cout << "Enclave Data: "
             << BytesToHex(report.enclave.data, report.enclave.data_len)
             << std::endl;
-  std::cout << "\t\t-- Device pubkey --" << std::endl;
-  std::cout << BytesToHex(report.dev_public_key, PUBLIC_KEY_SIZE) << std::endl;
+  //std::cout << "\t\t-- Device pubkey --" << std::endl;
+  //std::cout << BytesToHex(report.dev_public_key, FALCON_512_PK_SIZE) << std::endl;
 }
 
 byte*
@@ -149,17 +151,32 @@ int
 Report::checkSignaturesOnly(const byte* dev_public_key) {
   int sm_valid      = 0;
   int enclave_valid = 0;
+  unsigned char tmp[FALCON_TMPSIZE_SIGNDYN(9)];
+/*
+  std::cout << "SM DEV PK: "
+            << BytesToHex(report.dev_public_key, FALCON_512_PK_SIZE)
+            << std::endl;
+            */            
+  std::cout << "SM Signature: "
+            << BytesToHex(report.sm.signature, FALCON_512_SIG_SIZE)
+            << std::endl;
+  std::cout << "Enclave Signature: "
+            << BytesToHex(report.enclave.signature, FALCON_512_SIG_SIZE)
+            << std::endl;
 
+  std::cout << "REPORT SIZE: "
+            << sizeof(report)
+            << std::endl;
+  printPretty();
   /* verify SM report */
-  sm_valid = ed25519_verify(
-      report.sm.signature, reinterpret_cast<byte*>(&report.sm),
-      MDSIZE + PUBLIC_KEY_SIZE, dev_public_key);
-
+  sm_valid = falcon_verify(
+      report.sm.signature, FALCON_512_SIG_SIZE, FALCON_SIG_CT, dev_public_key, FALCON_512_PK_SIZE, reinterpret_cast<byte*>(&report.sm), MDSIZE + FALCON_512_PK_SIZE,
+      tmp, FALCON_TMPSIZE_SIGNDYN(9));
+  std::cout << "sm_valid: " << sm_valid << std::endl;
   /* verify Enclave report */
-  enclave_valid = ed25519_verify(
-      report.enclave.signature, reinterpret_cast<byte*>(&report.enclave),
-      MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-      report.sm.public_key);
+  enclave_valid = falcon_verify(
+      report.enclave.signature, FALCON_512_SIG_SIZE, FALCON_SIG_CT, report.sm.public_key, FALCON_512_PK_SIZE, reinterpret_cast<byte*>(&report.enclave), MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
+      tmp, FALCON_TMPSIZE_SIGNDYN(9));
 
   return sm_valid && enclave_valid;
 }

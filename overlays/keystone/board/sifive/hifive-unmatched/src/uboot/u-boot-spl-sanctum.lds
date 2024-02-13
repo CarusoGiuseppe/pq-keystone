@@ -89,4 +89,16 @@ SECTIONS
 	/* 64 Bytes : security monitor's signature by device */
 	PROVIDE( sanctum_sm_signature = . );
 	. += 0x40;
+
+	/* 897 Bytes: falcon public key */
+	PROVIDE( sanctum_falcon_pk = . );
+	. += 0x40;
+
+	/* 1281 Bytes: falcon secret key */
+	PROVIDE( sanctum_falcon_sk = . );
+	. += 0x40;
+
+	/* 809 Bytes: falcon signature */
+	PROVIDE( sanctum_falcon_sig = . );
+	. += 0x40;
 }

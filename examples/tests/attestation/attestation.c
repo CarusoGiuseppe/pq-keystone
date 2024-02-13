@@ -12,11 +12,11 @@ void EAPP_ENTRY eapp_entry(){
   edge_init();
 
   char* data = "nonce";
-  char buffer[2048];
+  char buffer[4096];
 
   attest_enclave((void*) buffer, data, 5);
 
-  ocall_copy_report(buffer, 2048);
+  ocall_copy_report(buffer, 4096);
 
   EAPP_RETURN(0);
 }

@@ -86,6 +86,13 @@ unsigned long sbi_sm_get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
   return ret;
 }
 
+/*unsigned long sbi_get_cert_chain(unsigned char** certs, unsigned char* sizes)
+{
+  unsigned long ret;
+  ret = get_cert_chain(certs, sizes);
+  return ret;
+}
+*/
 unsigned long sbi_sm_random()
 {
   return (unsigned long) platform_random();

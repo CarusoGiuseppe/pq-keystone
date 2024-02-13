@@ -25,9 +25,10 @@ void hash_finalize(void* md, hash_ctx* hash_ctx)
   sha3_final(md, hash_ctx);
 }
 
-void sign(void* sign, const void* data, size_t len, const unsigned char* public_key, const unsigned char* private_key)
-{
-  ed25519_sign(sign, data, len, public_key, private_key);
+void sign(void* sign, const void* data, size_t len,const unsigned char* private_key, unsigned char* tmp, shake256_context *rng)
+{ 
+  size_t sig_len;
+  falcon_sign_dyn(rng, sign, &sig_len, FALCON_SIG_CT, private_key, FALCON_PRIVKEY_SIZE(9), data, len, tmp, FALCON_TMPSIZE_SIGNDYN(9));
 }
 
 int kdf(const unsigned char* salt, size_t salt_len,

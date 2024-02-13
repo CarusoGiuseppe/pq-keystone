@@ -1,0 +1,10 @@
+--- a/lib/sbi/sbi_hart.c	2024-01-26 16:17:49.589411756 +0100
++++ b/lib/sbi/sbi_hart.c	2024-01-26 16:21:06.231703243 +0100
+@@ -732,6 +732,7 @@
+ 
+ void __attribute__((noreturn)) sbi_hart_hang(void)
+ {
++	sbi_printf("YES I STALLED: \n");
+ 	while (1)
+ 		wfi();
+ 	__builtin_unreachable();

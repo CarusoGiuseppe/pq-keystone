@@ -8,14 +8,16 @@
 
 typedef unsigned char byte;
 
-#define ATTEST_DATA_MAXLEN 1024
+#define ATTEST_DATA_MAXLEN 20//1024
 #define MDSIZE 64
-#define SIGNATURE_SIZE 64
-#define PUBLIC_KEY_SIZE 32
+#define SIGNATURE_SIZE 64 //64
+#define FALCON_512_SIG_SIZE 809 
+#define PUBLIC_KEY_SIZE 32 //32
+#define FALCON_512_PK_SIZE 897
 
 class PublicKey {
  public:
-  byte data[PUBLIC_KEY_SIZE];
+  byte data[FALCON_512_PK_SIZE];
   explicit PublicKey(std::string hexstr);
 };
 

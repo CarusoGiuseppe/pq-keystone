@@ -9,7 +9,9 @@ unsigned long
 print_string(char* str);
 void
 print_string_wrapper(void* buffer);
+
 #define OCALL_PRINT_STRING 1
+
 
 /***
  * An example call that will be exposed to the enclave application as

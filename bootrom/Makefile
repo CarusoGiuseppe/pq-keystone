@@ -5,11 +5,11 @@
 # (i.e. we want nostdlib, nostartfiles, etc).
 
 override CFLAGS := \
-	-mcmodel=medany \
+	-mcmodel=medany -mabi=lp64d \
 	-nostdlib -nostartfiles -fno-common -std=gnu11 \
 	-static \
 	-fPIC \
-	-O2 -Wall
+	-O1 -Wall
 O ?=.
 
 # ^ consider taking out -g -Og and putting in -O2
@@ -28,8 +28,11 @@ clean:
 bootrom_sources = \
 	./bootloader.S \
 	./bootloader.c \
+	./falcon512/*.c \
 	./ed25519/*.c \
-	./sha3/*.c
+	./sha3/*.c \
+	./x509custom/*.c
+
 
 %.elf: $(bootrom_sources) bootloader.lds
 	$(CC) $(CFLAGS) -I./ -L . -T bootloader.lds -o $@ $(bootrom_sources)

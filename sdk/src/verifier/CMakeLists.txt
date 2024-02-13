@@ -1,6 +1,6 @@
 project(keystone-verifier C CXX)
 
-set(CFLAGS      "-Wall -Werror")
+set(CFLAGS      "-Wall ")
 set(LDFLAGS     "-static")
 
 set(SOURCE_FILES
@@ -13,6 +13,16 @@ set(SOURCE_FILES
     ed25519/sc.c
     ed25519/sign.c
     ed25519/verify.c
+    falcon512/codec.c
+    falcon512/common.c
+    falcon512/falcon.c
+    falcon512/fft.c
+    falcon512/fpr.c
+    falcon512/keygen.c
+    falcon512/rng.c
+    falcon512/shake.c
+    falcon512/sign.c
+    falcon512/vrfy.c
     )
 
 set(INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include/verifier)

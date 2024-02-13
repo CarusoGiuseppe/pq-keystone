@@ -26,10 +26,10 @@ main() {
   if (retdata.size > 2048) retdata.size = 2048;
   copy_from_shared(nonce, retdata.offset, retdata.size);
 
-  char buffer[2048];
+  char buffer[4096];
   attest_enclave((void*)buffer, nonce, retdata.size);
-
-  ocall(OCALL_COPY_REPORT, buffer, 2048, 0, 0);
+  
+  ocall(OCALL_COPY_REPORT, buffer, 4096, 0, 0);
 
   EAPP_RETURN(0);
 }
