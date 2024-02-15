@@ -20,7 +20,7 @@
 // Special target platform header, set by configure script
 #include TARGET_PLATFORM_HEADER
 
-#define ATTEST_DATA_MAXLEN  20//1024
+#define ATTEST_DATA_MAXLEN  1024
 #define ENCLAVE_REGIONS_MAX 8
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
@@ -126,7 +126,7 @@ struct report
 {
   struct enclave_report enclave;
   struct sm_report sm;
-  //byte dev_public_key[FALCON_512_PK_SIZE]; //PUBLIC_KEY_SIZE
+  byte dev_public_key[FALCON_512_PK_SIZE]; //PUBLIC_KEY_SIZE
 };
 
 /* sealing key structure */

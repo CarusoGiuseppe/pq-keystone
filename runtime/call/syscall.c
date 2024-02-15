@@ -180,7 +180,7 @@ void handle_syscall(struct encl_ctx* ctx)
     ret = sbi_attest_enclave(rt_copy_buffer_1, rt_copy_buffer_2, arg2);
 
     /* TODO we consistently don't have report size when we need it */
-    copy_to_user((void*)arg0, (void*)rt_copy_buffer_1, 2048);
+    copy_to_user((void*)arg0, (void*)rt_copy_buffer_1, 5120);
     //print_strace("[ATTEST] p1 0x%p->0x%p p2 0x%p->0x%p sz %lx = %lu\r\n",arg0,arg0_trans,arg1,arg1_trans,arg2,ret);
     break;
   case(RUNTIME_SYSCALL_GET_SEALING_KEY):;

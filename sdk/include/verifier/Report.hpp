@@ -27,7 +27,7 @@ struct sm_report_t {
 struct report_t {
   struct enclave_report_t enclave;
   struct sm_report_t sm;
-  //byte dev_public_key[FALCON_512_PK_SIZE];
+  byte dev_public_key[FALCON_512_PK_SIZE];
 };
 
 class Report {

@@ -34,14 +34,3 @@ get_sealing_key(
       SYSCALL_GET_SEALING_KEY, sealing_key_struct, sealing_key_struct_size,
       key_ident, key_ident_size);
 }
-
-/* get certs chain */
-/*
-unsigned long 
-get_cert_chain(void** certs, void* sizes)
-{
-  return SYSCALL_2(
-      SYSCALL_GET_CERT_CHAIN, certs,
-      sizes);
-}
-*/

@@ -43,7 +43,6 @@ SharedBuffer::get_ptr_from_offset(edge_data_offset offset, uintptr_t* ptr) {
   if (offset > UINTPTR_MAX - buffer_ || offset > buffer_len_) {
     return -1;
   }
-
   /* ptr looks valid, create it */
   *ptr = buffer_ + offset;
   return 0;
@@ -63,7 +62,7 @@ SharedBuffer::get_call_args_ptr_or_set_bad_offset() {
     set_bad_offset();
     return std::nullopt;
   }
-  return std::pair{call_args, arg_len};
+  return std::pair{call_args, arg_len}; // {, dim of buffer}
 }
 
 std::optional<char*>

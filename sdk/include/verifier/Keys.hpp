@@ -8,7 +8,7 @@
 
 typedef unsigned char byte;
 
-#define ATTEST_DATA_MAXLEN 20//1024
+#define ATTEST_DATA_MAXLEN 1024
 #define MDSIZE 64
 #define SIGNATURE_SIZE 64 //64
 #define FALCON_512_SIG_SIZE 809 

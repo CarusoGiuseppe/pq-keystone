@@ -62,7 +62,6 @@ byte dev_public_key[FALCON_512_PK_SIZE] = { 0, };
 byte tmp[FALCON_TMPSIZE_SIGNDYN(9)];
 byte hash_for_verification[64];
 
-
 mbedtls_x509_crt uff_cert_sm;
 mbedtls_x509_crt uff_cert_root;
 mbedtls_x509_crt uff_cert_man;
@@ -183,18 +182,21 @@ void base64_encode(unsigned char *data,
       sbi_printf("\n-----END CERTIFICATE-----\n");
 }
 
+  /*
 void print_key(byte *hash, size_t size);
 
 void print_key(byte *key, size_t size){
   sbi_printf("\n-----BEGIN PUBLIC KEY-----\n");
-  /*
+
   for (int i = 0; i < size; ++i)
   {
     sbi_printf("%02x", key[i]);
-  }*/
+  }
   //base64_encode(key, size);
   sbi_printf("\n-----END PUBLIC KEY-----\n");
 }
+*/
+
 /*
 
 void print_uffcert(mbedtls_x509_crt *cert);
@@ -270,7 +272,6 @@ void sm_sign(void* signature, const void* data, size_t len)
 {
   byte seed[]={0x01};
   shake256_init_prng_from_seed(&rng, seed, 1);
-  //sbi_memset(tmp, 0, FALCON_TMPSIZE_SIGNDYN(logn_test));
   sign(signature, data, len, sm_private_key, tmp, &rng);
 }
 
@@ -417,7 +418,6 @@ void sm_copy_key()
     base64_encode(uff_cert_sm.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE, 0);
     sbi_printf("\nDEVICE ROOT PUBLIC KEY:\n");
     base64_encode(uff_cert_root.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE, 0);
-    
     
 }
 

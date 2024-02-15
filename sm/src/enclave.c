@@ -44,8 +44,10 @@ extern int length_cert_man;
 extern int length_cert_root;
 extern int length_cert;
 extern shake256_context rng;
-const unsigned char OID_algo[] = {0x02,0x10,0x03,0x48,0x01,0x65,0x03,0x04,0x02,0x0A};
 struct report report;
+const unsigned char OID_algo[] = {0x02,0x10,0x03,0x48,0x01,0x65,0x03,0x04,0x02,0x0A};
+dice_tcbInfo tcbInfo;
+measure m;
 byte sign_tmp[FALCON_SIG_CT_SIZE(9)];
 
 /****************************
@@ -289,7 +291,7 @@ static unsigned long copy_enclave_data(struct enclave* enclave,
 static unsigned long copy_enclave_report(struct enclave* enclave,
                                             uintptr_t dest, struct report* source) {
   int illegal = copy_from_sm(dest, source, sizeof(struct report));
-  
+
   if(illegal)
     return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
   else
@@ -300,7 +302,7 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
 {
   uintptr_t epm_start, epm_end;
 
-   sbi_printf("[create args info]: \r\n\tepm_addr: %lx\r\n\tepmsize: %lx\r\n\tutm_addr: %lx\r\n\tutmsize: %lx\r\n\truntime_addr: %lx\r\n\tuser_addr: %lx\r\n\tfree_addr: %lx\r\n", 
+   /*sbi_printf("[create args info]: \r\n\tepm_addr: %lx\r\n\tepmsize: %lx\r\n\tutm_addr: %lx\r\n\tutmsize: %lx\r\n\truntime_addr: %lx\r\n\tuser_addr: %lx\r\n\tfree_addr: %lx\r\n", 
           args->epm_region.paddr, 
           args->epm_region.size, 
           args->utm_region.paddr, 
@@ -308,7 +310,7 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
           args->runtime_paddr, 
           args->user_paddr, 
           args->free_paddr); 
-  
+  */
   // check if physical addresses are valid
   if (args->epm_region.size <= 0)
     return 0;
@@ -368,8 +370,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   int logn_test = 9;
   enclave_id eid; 
   sha3_ctx_t hash_ctx_to_use;
-  dice_tcbInfo tcbInfo;
-  measure m;
+  
 
   uintptr_t base = create_args.epm_region.paddr;
   size_t size = create_args.epm_region.size;
@@ -455,11 +456,6 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
     sha3_update(&hash_ctx_to_use, enclaves[eid].hash, 64);
     sha3_final(enclaves[eid].CDI, &hash_ctx_to_use);
    
-    //unsigned char seed_for_local_att_key[32];
-
-    //for(int i = 0; i < 32; i ++)
-      //seed_for_local_att_key[i] = enclaves[eid].CDI[i];
-
     shake256_init_prng_from_seed(&rng, enclaves[eid].CDI, 32);
 
     if(falcon_keygen_make(&rng, logn_test, enclaves[eid].local_att_priv, FALCON_PRIVKEY_SIZE(logn_test), enclaves[eid].local_att_pub, FALCON_PUBKEY_SIZE(logn_test), tmp, FALCON_TMPSIZE_KEYGEN(logn_test)) != 0)
@@ -467,13 +463,9 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
         sbi_printf("\n[SM] Error during PQ keypair generation\n");
         goto unlock;
       }
-    //my_memset(tmp, 0, FALCON_TMPSIZE_SIGNDYN(logn_test));
-    //spin_unlock(&encl_lock);
 
     // Associated to the local attestation keys of the enclaves, a new 509 cert is created 
     mbedtls_x509write_crt_init(&enclaves[eid].crt_local_att);
-    //my_memset(&enclaves[eid].crt_local_att, 0, sizeof(&enclaves[eid].crt_local_att));
-      //enclaves[eid].crt_local_att.version = MBEDTLS_X509_CRT_VERSION_3;
     
     if(mbedtls_x509write_crt_set_issuer_name_mod(&enclaves[eid].crt_local_att, "CN=Security Monitor")){
       sbi_printf("\n[SM] Error setting issuer certificate name\n");
@@ -777,7 +769,7 @@ unsigned long attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
   spin_unlock(&encl_lock); // Don't need to wait while signing, which might take some time
   //if (my_strncmp(report.enclave.hash, enclaves[eid].hash, MDSIZE) == 0)
   //{
-    //my_memcpy(report.dev_public_key, dev_public_key, FALCON_512_PK_SIZE);
+    my_memcpy(report.dev_public_key, dev_public_key, FALCON_512_PK_SIZE);
     my_memcpy(report.sm.hash, sm_hash, MDSIZE);
     my_memcpy(report.sm.public_key, sm_public_key, FALCON_512_PK_SIZE);
     my_memcpy(report.sm.signature, sm_signature, FALCON_512_SIG_SIZE);
@@ -785,29 +777,12 @@ unsigned long attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
 
     sm_sign(report.enclave.signature,
         &report.enclave,
-        sizeof(struct enclave_report)
-        - FALCON_512_SIG_SIZE
-        - ATTEST_DATA_MAXLEN + size);
+        MDSIZE 
+        + sizeof(uint64_t) 
+        + report.enclave.data_len);
   /*} else {
     sbi_printf("\n[SM] report for attestation already computed\n");
   }*/
-    /*
-  sbi_printf("\n SM PK:\n");
-  for (int i = 0; i < FALCON_512_PK_SIZE; ++i)
-  {
-    sbi_printf("%02x", report.sm.public_key[i]);
-  }
-  sbi_printf("\nSM SIGNATURE:\n");
-  for (int i = 0; i < FALCON_512_SIG_SIZE; ++i)
-  {
-    sbi_printf("%02x", report.sm.signature[i]);
-  }
-  sbi_printf("\nEnclave SIG:\n");
-  for (int i = 0; i < FALCON_512_SIG_SIZE; ++i)
-  {
-    sbi_printf("%02x", report.enclave.signature[i]);
-  }
-*/
 
   spin_lock(&encl_lock);
 

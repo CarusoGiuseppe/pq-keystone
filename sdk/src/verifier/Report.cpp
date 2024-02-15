@@ -42,8 +42,8 @@ Report::fromJson(std::string jsonstr) {
   std::string err;
   const auto json = Json::parse(jsonstr, err);
 
-  //std::string device_pubkey = json["device_pubkey"].string_value();
-  //HexToBytes(report.dev_public_key, FALCON_512_PK_SIZE, device_pubkey);
+  std::string device_pubkey = json["device_pubkey"].string_value();
+  HexToBytes(report.dev_public_key, FALCON_512_PK_SIZE, device_pubkey);
 
   std::string sm_hash = json["security_monitor"]["hash"].string_value();
   HexToBytes(report.sm.hash, MDSIZE, sm_hash);
@@ -64,7 +64,6 @@ Report::fromJson(std::string jsonstr) {
 
 void
 Report::fromBytes(byte* bin) {
-  std::cout << "REPORT SIZE: " << sizeof(struct report_t) << std::endl;
   std::memcpy(&report, bin, sizeof(struct report_t));
 }
 
@@ -74,7 +73,7 @@ Report::stringfy() {
     return "{ \"error\" : \"invalid data length\" }";
   }
   auto json = Json::object{
-      //{"device_pubkey", BytesToHex(report.dev_public_key, FALCON_512_PK_SIZE)},
+      {"device_pubkey", BytesToHex(report.dev_public_key, FALCON_512_PK_SIZE)},
       {
           "security_monitor",
           Json::object{
@@ -119,8 +118,8 @@ Report::printPretty() {
   std::cout << "Enclave Data: "
             << BytesToHex(report.enclave.data, report.enclave.data_len)
             << std::endl;
-  //std::cout << "\t\t-- Device pubkey --" << std::endl;
-  //std::cout << BytesToHex(report.dev_public_key, FALCON_512_PK_SIZE) << std::endl;
+  std::cout << "\t\t-- Device pubkey --" << std::endl;
+  std::cout << BytesToHex(report.dev_public_key, FALCON_512_PK_SIZE) << std::endl;
 }
 
 byte*
@@ -143,7 +142,7 @@ Report::verify(
   int sm_hash_valid = memcmp(expected_sm_hash, report.sm.hash, MDSIZE) == 0;
 
   int signature_valid = checkSignaturesOnly(dev_public_key);
-
+  
   return encl_hash_valid && sm_hash_valid && signature_valid;
 }
 
@@ -151,34 +150,18 @@ int
 Report::checkSignaturesOnly(const byte* dev_public_key) {
   int sm_valid      = 0;
   int enclave_valid = 0;
-  unsigned char tmp[FALCON_TMPSIZE_SIGNDYN(9)];
-/*
-  std::cout << "SM DEV PK: "
-            << BytesToHex(report.dev_public_key, FALCON_512_PK_SIZE)
-            << std::endl;
-            */            
-  std::cout << "SM Signature: "
-            << BytesToHex(report.sm.signature, FALCON_512_SIG_SIZE)
-            << std::endl;
-  std::cout << "Enclave Signature: "
-            << BytesToHex(report.enclave.signature, FALCON_512_SIG_SIZE)
-            << std::endl;
+  unsigned char tmp[FALCON_TMPSIZE_VERIFY(9)];
 
-  std::cout << "REPORT SIZE: "
-            << sizeof(report)
-            << std::endl;
-  printPretty();
   /* verify SM report */
   sm_valid = falcon_verify(
       report.sm.signature, FALCON_512_SIG_SIZE, FALCON_SIG_CT, dev_public_key, FALCON_512_PK_SIZE, reinterpret_cast<byte*>(&report.sm), MDSIZE + FALCON_512_PK_SIZE,
-      tmp, FALCON_TMPSIZE_SIGNDYN(9));
-  std::cout << "sm_valid: " << sm_valid << std::endl;
+      tmp, FALCON_TMPSIZE_VERIFY(9));
   /* verify Enclave report */
   enclave_valid = falcon_verify(
       report.enclave.signature, FALCON_512_SIG_SIZE, FALCON_SIG_CT, report.sm.public_key, FALCON_512_PK_SIZE, reinterpret_cast<byte*>(&report.enclave), MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-      tmp, FALCON_TMPSIZE_SIGNDYN(9));
-
-  return sm_valid && enclave_valid;
+      tmp, FALCON_TMPSIZE_VERIFY(9));
+  //the return values are '0' if the signatures are correct, so for correctness of the if condition evaluation we negate the value
+  return !(sm_valid && enclave_valid);
 }
 
 void*
