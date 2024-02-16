@@ -45,9 +45,6 @@ extern int length_cert_root;
 extern int length_cert;
 extern shake256_context rng;
 struct report report;
-const unsigned char OID_algo[] = {0x02,0x10,0x03,0x48,0x01,0x65,0x03,0x04,0x02,0x0A};
-dice_tcbInfo tcbInfo;
-measure m;
 byte sign_tmp[FALCON_SIG_CT_SIZE(9)];
 
 /****************************
@@ -370,7 +367,9 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   int logn_test = 9;
   enclave_id eid; 
   sha3_ctx_t hash_ctx_to_use;
-  
+  const unsigned char OID_algo[] = {0x02,0x10,0x03,0x48,0x01,0x65,0x03,0x04,0x02,0x0A};
+  dice_tcbInfo tcbInfo;
+  measure m;
 
   uintptr_t base = create_args.epm_region.paddr;
   size_t size = create_args.epm_region.size;
@@ -448,9 +447,10 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
  
   ret = validate_and_hash_enclave(&enclaves[eid]);
 
-  if(enclaves[eid].crt_local_att_der_length > 0){
+  /*if(enclaves[eid].crt_local_att_der_length > 0){
     sbi_printf("\n[SM] Enclave certificate already present...skipping to the run\n");
     } else {
+    */
     sha3_init(&hash_ctx_to_use, 64);
     sha3_update(&hash_ctx_to_use, CDI, 64);
     sha3_update(&hash_ctx_to_use, enclaves[eid].hash, 64);
@@ -549,7 +549,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
     //enclaves[eid].n_keypair = 0;
       base64_encode(enclaves[eid].local_att_pub, FALCON_512_PK_SIZE, 0);
       base64_encode(enclaves[eid].crt_local_att_der, effe_len_cert_der, 1); 
-  }
+  //}
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
   if (ret)
     goto unlock;
@@ -622,6 +622,14 @@ unsigned long destroy_enclave(enclave_id eid)
     //1.b free pmp region
     pmp_unset_global(rid);
     pmp_region_free_atomic(rid);
+    sbi_memset((void*)enclaves[eid].local_att_pub, 0, FALCON_512_PK_SIZE);
+    sbi_memset((void*)enclaves[eid].local_att_priv, 0, FALCON_512_SK_SIZE);
+    sbi_memset((void*)enclaves[eid].cert_der, 0, 2100);
+    sbi_memset((void*)&enclaves[eid].crt_local_att, 0, sizeof(enclaves[eid].crt_local_att));
+    sbi_memset((void*)enclaves[eid].crt_local_att_der, 0, 2037);
+    enclaves[eid].crt_local_att_der_length = 0;
+    sbi_memset((void*)&enclaves[eid].subj_key, 0 , sizeof(enclaves[eid].subj_key));
+    sbi_memset((void*)&enclaves[eid].issu_key, 0 , sizeof(enclaves[eid].issu_key));
   }
 
   // 2. free pmp region for UTM

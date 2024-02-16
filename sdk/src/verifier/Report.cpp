@@ -139,10 +139,20 @@ Report::verify(
   /* verify that enclave hash matches */
   int encl_hash_valid =
       memcmp(expected_enclave_hash, report.enclave.hash, MDSIZE) == 0;
+      if (encl_hash_valid == 1)
+      {
+        printf("Enclave Hash matches\n");
+      }
   int sm_hash_valid = memcmp(expected_sm_hash, report.sm.hash, MDSIZE) == 0;
-
+      if (sm_hash_valid == 1)
+      {
+        printf("SM Hash matches\n");
+      }
   int signature_valid = checkSignaturesOnly(dev_public_key);
-  
+      if (signature_valid == 1)
+      {
+        printf("Signatures are correct\n");
+      }
   return encl_hash_valid && sm_hash_valid && signature_valid;
 }
 
