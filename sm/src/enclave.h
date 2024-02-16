@@ -83,7 +83,7 @@ struct enclave
   the falcon keygen stalls with the tmp allocated in the stack
   */
   //byte tmp[FALCON_TMPSIZE_KEYGEN(9)];
-  unsigned char cert_der[2100];
+  unsigned char cert_der[2500];
   mbedtls_x509write_cert crt_local_att;
   unsigned char crt_local_att_der[2037]; //512
   int crt_local_att_der_length;

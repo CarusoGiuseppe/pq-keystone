@@ -447,10 +447,9 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
  
   ret = validate_and_hash_enclave(&enclaves[eid]);
 
-  /*if(enclaves[eid].crt_local_att_der_length > 0){
+  if(enclaves[eid].crt_local_att_der_length > 0){
     sbi_printf("\n[SM] Enclave certificate already present...skipping to the run\n");
     } else {
-    */
     sha3_init(&hash_ctx_to_use, 64);
     sha3_update(&hash_ctx_to_use, CDI, 64);
     sha3_update(&hash_ctx_to_use, enclaves[eid].hash, 64);
@@ -532,7 +531,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
     //unsigned char cert_der[2700];
     int effe_len_cert_der = 0;
 
-    if((effe_len_cert_der = mbedtls_x509write_crt_der_tmp(&enclaves[eid].crt_local_att, enclaves[eid].cert_der, 2100, NULL, tmp,  &rng, sign_tmp)) <= 0){
+    if((effe_len_cert_der = mbedtls_x509write_crt_der_tmp(&enclaves[eid].crt_local_att, enclaves[eid].cert_der, 2500, NULL, tmp,  &rng, sign_tmp)) <= 0){
       sbi_printf("\n[SM] Error writing certificate in DER format: %d\n", effe_len_cert_der);
         goto unlock;
     }
@@ -541,7 +540,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
     
     unsigned char *cert_real = enclaves[eid].cert_der;
     int dif  = 0;
-    dif= 2100-effe_len_cert_der;
+    dif= 2500-effe_len_cert_der;
     cert_real += dif;
     
     enclaves[eid].crt_local_att_der_length = effe_len_cert_der;
@@ -549,7 +548,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
     //enclaves[eid].n_keypair = 0;
       base64_encode(enclaves[eid].local_att_pub, FALCON_512_PK_SIZE, 0);
       base64_encode(enclaves[eid].crt_local_att_der, effe_len_cert_der, 1); 
-  //}
+  }
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
   if (ret)
     goto unlock;
@@ -624,7 +623,7 @@ unsigned long destroy_enclave(enclave_id eid)
     pmp_region_free_atomic(rid);
     sbi_memset((void*)enclaves[eid].local_att_pub, 0, FALCON_512_PK_SIZE);
     sbi_memset((void*)enclaves[eid].local_att_priv, 0, FALCON_512_SK_SIZE);
-    sbi_memset((void*)enclaves[eid].cert_der, 0, 2100);
+    sbi_memset((void*)enclaves[eid].cert_der, 0, 2500);
     sbi_memset((void*)&enclaves[eid].crt_local_att, 0, sizeof(enclaves[eid].crt_local_att));
     sbi_memset((void*)enclaves[eid].crt_local_att_der, 0, 2037);
     enclaves[eid].crt_local_att_der_length = 0;
