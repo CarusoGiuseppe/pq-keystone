@@ -44,5 +44,5 @@
  }
 +
 +void to_be_stopped(struct sbi_scratch *scratch){
-+	sbi_init(scratch, TRUE);
++	sbi_init(scratch, FALSE);
 +}
