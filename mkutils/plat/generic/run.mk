@@ -6,7 +6,7 @@ QEMU_PORT       ?= 9821
 QEMU_DBG_PORT   ?= $(shell echo $$(( $(QEMU_PORT) + 1)) )
 QEMU_DEBUG      := -gdb tcp::$(QEMU_DBG_PORT) -S
 
-QEMU_MEM        ?= 4G
+QEMU_MEM        ?= 2G
 QEMU_SMP        ?= 4
 
 
