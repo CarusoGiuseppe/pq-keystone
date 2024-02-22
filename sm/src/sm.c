@@ -69,7 +69,6 @@ mbedtls_x509_crt uff_cert_man;
 sha3_ctx_t ctx_hash;
 shake256_context rng;
 
-//byte seed_for_ECA_keys[64] = {0,};
 unsigned int sanctum_sm_size = 0x1fd000;
 
 u64 init_value;
@@ -125,6 +124,7 @@ void base64_encode(unsigned char *data,
     size_t divider = 4;
     size_t i = 1;
     size_t bufIndex = 1;
+  
   while (i < input_length) {
     tmpByte <<= divider;
     unsigned char mask = ~(0xFF >> divider);
@@ -182,66 +182,7 @@ void base64_encode(unsigned char *data,
       sbi_printf("\n-----END CERTIFICATE-----\n");
 }
 
-  /*
-void print_key(byte *hash, size_t size);
 
-void print_key(byte *key, size_t size){
-  sbi_printf("\n-----BEGIN PUBLIC KEY-----\n");
-
-  for (int i = 0; i < size; ++i)
-  {
-    sbi_printf("%02x", key[i]);
-  }
-  //base64_encode(key, size);
-  sbi_printf("\n-----END PUBLIC KEY-----\n");
-}
-*/
-
-/*
-
-void print_uffcert(mbedtls_x509_crt *cert);
-
-void print_uffcert(mbedtls_x509_crt *cert){
-  sbi_printf("\n=========START UFF CERTIFICATE=========\n");
-  sbi_printf("ISSUER: ");
-  for (int i = 0; i < cert->issuer_arr[0].val.len; ++i)
-  {
-    sbi_printf("%c", cert->issuer_arr[0].val.p[i]);
-  }
-  sbi_printf("\n");
-  sbi_printf("SUBJECT: ");
-  for (int i = 0; i < cert->subject_arr[0].val.len; ++i)
-  {
-    sbi_printf("%c", cert->subject_arr[0].val.p[i]);
-  }
-  sbi_printf("\n");
-  sbi_printf("VALIDITY %d/%d/%d to %d/%d/%d\n", cert->valid_from.day, cert->valid_from.mon, cert->valid_from.year, cert->valid_to.day, cert->valid_to.mon, cert->valid_to.year);
-  sbi_printf("SERIAL: ");
-  for (int i = 0; i < cert->serial.len; ++i)
-  {
-    sbi_printf("%02x", cert->serial.p[i]  );
-  }
-  sbi_printf("\n");
-  sbi_printf("SIGNATURE:\n");
-  for (int i = 0; i < cert->sig.len; ++i)
-  {
-    sbi_printf("%02x", cert->sig.p[i]);
-  }
-  sbi_printf("\n");
-  sbi_printf("KEY OF LENGTH: %ld\n", cert->pk.pk_ctx.len);
-  print_key(cert->pk.pk_ctx.pub_key, cert->pk.pk_ctx.len);
-  sbi_printf("MEASURE:\n");
-  print_hash(cert->dice_tcb_info.fwids[0].digest, 64);
-  sbi_printf("TBS FIELD: \n");
-  for (int i = 0; i < cert->tbs.len; ++i)
-  {
-    sbi_printf("%02x", cert->tbs.p[i]);
-  }
-  sbi_printf("\n");
-  sbi_printf("\n==========END UFF CERTIFICATE=========\n");
-
-}
-*/
 int osm_pmp_set(uint8_t perm)
 {
   /* in case of OSM, PMP cfg is exactly the opposite.*/
@@ -309,6 +250,7 @@ void sm_copy_key()
   length_cert = sanctum_length_cert;
   length_cert_root = sanctum_length_cert_root;
   length_cert_man = sanctum_length_cert_man;
+
   /********************PARSE CERTIFICATES FOR CORRECTNESS**********************/
 
   if ((mbedtls_x509_crt_parse_der(&uff_cert_sm, cert_sm, length_cert)) != 0){
@@ -368,6 +310,7 @@ void sm_copy_key()
   }
 
 /********************VERIFY CERTIFICATES SIGNATURES**********************/
+
   int falcon_tmpvrfy_size_test = FALCON_TMPSIZE_SIGNDYN(logn_test);
   sha3_init(&ctx_hash, 64);
   sha3_update(&ctx_hash, uff_cert_sm.tbs.p, uff_cert_sm.tbs.len);
@@ -398,7 +341,7 @@ void sm_copy_key()
     }
   }
 
-  if(my_memcmp(/*uff_cert_sm.hash.p,*/ uff_cert_sm.dice_tcb_info.fwids[0].digest, sm_hash, 64) != 0){
+  if(my_memcmp(uff_cert_sm.dice_tcb_info.fwids[0].digest, sm_hash, 64) != 0){
     sbi_printf("[SM] Problem with the extension of the ECA certificate");
     sbi_hart_hang();
   }
@@ -410,7 +353,7 @@ void sm_copy_key()
     sbi_memcpy(dev_public_key, uff_cert_man.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE);
     sbi_memcpy(ECASM_pk, uff_cert_sm.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE);
     
-    sbi_printf("\n[SM] Public Keys extracted from certs generated in the bootrom\n");
+    sbi_printf("[SM] Public Keys extracted from certs generated in the bootrom\n");
     
     sbi_printf("\nMANUFACTURER PUBLIC KEY:\n");
     base64_encode(uff_cert_man.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE, 0);
@@ -505,8 +448,6 @@ void sm_init(bool cold_boot)
 
   /* below are executed by all harts */
   pmp_init();
-
-  //sbi_printf("PMP SET KEYSTONE WITH PARAMETERS: sm_region_id:%d os_region_id:%d\n\n", sm_region_id, os_region_id);
 
   pmp_set_keystone(sm_region_id, PMP_NO_PERM);
   pmp_set_keystone(os_region_id, PMP_ALL_PERM);

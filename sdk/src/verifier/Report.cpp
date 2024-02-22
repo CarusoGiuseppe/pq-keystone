@@ -143,10 +143,38 @@ Report::verify(
       {
         printf("Enclave Hash matches\n");
       }
+      else
+      {
+        printf("Expected Enclave Hash:\n");
+        for (int i = 0; i < MDSIZE; ++i)
+        {
+          printf("%02x", expected_enclave_hash[i]);
+        }
+        printf("\nEnclave Hash in Report:\n");
+        for (int i = 0; i < MDSIZE; ++i)
+        {
+          printf("%02x", report.enclave.hash[i]);
+        }
+        printf("\n");
+      }
   int sm_hash_valid = memcmp(expected_sm_hash, report.sm.hash, MDSIZE) == 0;
       if (sm_hash_valid == 1)
       {
         printf("SM Hash matches\n");
+      }
+      else
+      {
+        printf("Expected SM Hash:\n");
+        for (int i = 0; i < MDSIZE; ++i)
+        {
+          printf("%02x", expected_sm_hash[i]);
+        }
+        printf("\nSM Hash in Report:\n");
+        for (int i = 0; i < MDSIZE; ++i)
+        {
+          printf("%02x", report.sm.hash[i]);
+        }
+        printf("\n");
       }
   int signature_valid = checkSignaturesOnly(dev_public_key);
       if (signature_valid == 1)

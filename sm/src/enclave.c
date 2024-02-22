@@ -28,18 +28,18 @@ static spinlock_t encl_lock = SPIN_LOCK_INITIALIZER;
 
 extern void save_host_regs(void);
 extern void restore_host_regs(void);
-extern byte dev_public_key[897];//PUBLIC_KEY_SIZE
+extern byte dev_public_key[897];
 extern byte tmp[FALCON_TMPSIZE_SIGNDYN(9)];
 extern byte CDI[64]; 
-extern byte ECASM_pk[897]; //64
-extern byte ECASM_priv[1281]; //64
+extern byte ECASM_pk[897]; 
+extern byte ECASM_priv[1281]; 
 //extern mbedtls_x509_crt uff_cert_sm;
 extern byte sm_hash[MDSIZE];
 extern byte sm_signature[FALCON_512_SIG_SIZE];
 extern byte sm_public_key[FALCON_512_PK_SIZE];
-extern byte cert_sm[2065]; //2065
-extern byte cert_root[1883]; //1883
-extern byte cert_man[1903]; //1903
+extern byte cert_sm[2065]; 
+extern byte cert_root[1883]; 
+extern byte cert_man[1903];
 extern int length_cert_man;
 extern int length_cert_root;
 extern int length_cert;
@@ -475,12 +475,8 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
       sbi_printf("\n[SM] Error setting subject certificate name\n");
       goto unlock;
     }
-
-    //mbedtls_pk_context subj_key;
     
     mbedtls_pk_init(&enclaves[eid].subj_key);
-
-    //mbedtls_pk_context issu_key;
     
     mbedtls_pk_init(&enclaves[eid].issu_key);
     
@@ -526,17 +522,12 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
       goto unlock;
     }
       
-    //sbi_memset(tmp, 0, FALCON_TMPSIZE_SIGNDYN(logn_test));
-
-    //unsigned char cert_der[2700];
     int effe_len_cert_der = 0;
 
     if((effe_len_cert_der = mbedtls_x509write_crt_der_tmp(&enclaves[eid].crt_local_att, enclaves[eid].cert_der, 2500, NULL, tmp,  &rng, sign_tmp)) <= 0){
       sbi_printf("\n[SM] Error writing certificate in DER format: %d\n", effe_len_cert_der);
         goto unlock;
     }
-
-    //my_memset(tmp, 0, FALCON_TMPSIZE_SIGNDYN(logn_test));
     
     unsigned char *cert_real = enclaves[eid].cert_der;
     int dif  = 0;
@@ -774,22 +765,18 @@ unsigned long attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
   }
 
   spin_unlock(&encl_lock); // Don't need to wait while signing, which might take some time
-  //if (my_strncmp(report.enclave.hash, enclaves[eid].hash, MDSIZE) == 0)
-  //{
-    my_memcpy(report.dev_public_key, dev_public_key, FALCON_512_PK_SIZE);
-    my_memcpy(report.sm.hash, sm_hash, MDSIZE);
-    my_memcpy(report.sm.public_key, sm_public_key, FALCON_512_PK_SIZE);
-    my_memcpy(report.sm.signature, sm_signature, FALCON_512_SIG_SIZE);
-    my_memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);
 
-    sm_sign(report.enclave.signature,
-        &report.enclave,
-        MDSIZE 
-        + sizeof(uint64_t) 
-        + report.enclave.data_len);
-  /*} else {
-    sbi_printf("\n[SM] report for attestation already computed\n");
-  }*/
+  my_memcpy(report.dev_public_key, dev_public_key, FALCON_512_PK_SIZE);
+  my_memcpy(report.sm.hash, sm_hash, MDSIZE);
+  my_memcpy(report.sm.public_key, sm_public_key, FALCON_512_PK_SIZE);
+  my_memcpy(report.sm.signature, sm_signature, FALCON_512_SIG_SIZE);
+  my_memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);
+
+  sm_sign(report.enclave.signature,
+      &report.enclave,
+      MDSIZE 
+      + sizeof(uint64_t) 
+      + report.enclave.data_len);
 
   spin_lock(&encl_lock);
 
@@ -830,6 +817,7 @@ unsigned long get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
+
 /*
 unsigned long create_keypair(enclave_id eid, unsigned char* pk, int seed_enc){
 

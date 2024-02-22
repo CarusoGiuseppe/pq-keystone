@@ -36,25 +36,19 @@ static const unsigned char sanctum_uds[] = {
 
 typedef unsigned char byte;
 
-// Sanctum header fields in DRAM
-//extern byte sanctum_dev_public_key[897];
-
 extern byte sanctum_sm_hash[64];
-extern byte sanctum_sm_public_key[897];//897
-extern byte sanctum_sm_secret_key[1281];//1281
-extern byte sanctum_sm_signature[809];//809
-extern byte sanctum_ECASM_priv[1281];//1281
+extern byte sanctum_sm_public_key[897];
+extern byte sanctum_sm_secret_key[1281];
+extern byte sanctum_sm_signature[809];
+extern byte sanctum_ECASM_priv[1281];
 
 /**
  * DEVICE IDENTIFIER COMPOSITION ENGINE PARAMETERS TO SM
 */
 extern byte sanctum_CDI[64];
-//extern byte sanctum_ECASM_pk[64];
-//extern byte sanctum_sm_hash_to_check[64];
-//byte sanctum_device_root_key_pub[897];
-extern byte sanctum_cert_sm[2065];//2065
-extern byte sanctum_cert_root[1883];//1883
-extern byte sanctum_cert_man[1903];//1903
+extern byte sanctum_cert_sm[2065];
+extern byte sanctum_cert_root[1883];
+extern byte sanctum_cert_man[1903];
 extern int sanctum_length_cert;
 extern int sanctum_length_cert_root;
 extern int sanctum_length_cert_man;
@@ -85,9 +79,7 @@ inline byte random_byte(unsigned int i) {
 }
 
 int bootloader() {
-	//*sanctum_sm_size = 0x200;
   // Reserve stack space for secrets
-
   int logn_test = 9, ret;
   
   byte scratchpad[128];
@@ -152,7 +144,6 @@ int bootloader() {
   //#include "sm_sign_and_pk_man.h"
   
   // Derive {SK_D, PK_D} (device keys) from a 32 B random seed
-  //falcon_keygen_make(&rng, logn_test, sanctum_dev_secret_key, FALCON_PRIVKEY_SIZE(logn_test), sanctum_dev_public_key, FALCON_PUBKEY_SIZE(logn_test), tmp, falcon_tmpkeygen_size_test);
   
   // Measure for the first time the SM to simulate that the signature is provided by the manufacturer
   sha3_init(&hash_ctx, 64);
@@ -176,10 +167,10 @@ int bootloader() {
   sha3_update(&hash_ctx, sanctum_sm_hash, sizeof(*sanctum_sm_hash));
   sha3_final(sanctum_CDI, &hash_ctx);
 
-   // The device root keys are created from the CDI
+  // The device root keys are created from the CDI
   // This keys are certified by the manufacuter and the cert is stored in memory, like the cert of the manufacturer
-
   shake256_init_prng_from_seed(&rng, sanctum_CDI, sizeof(*sanctum_CDI));
+  
   //generate device root key from CDI
   falcon_keygen_make(&rng, logn_test, sanctum_device_root_key_priv, FALCON_PRIVKEY_SIZE(logn_test), sanctum_device_root_key_pub, FALCON_PUBKEY_SIZE(logn_test),tmp,falcon_tmpkeygen_size_test);
   
