@@ -51,7 +51,6 @@ int crypto_sign_keypair(uint8_t *pk, uint8_t *sk) {
 
   /* Add error vector s2 */
   polyveck_add(&t1, &t1, &s2);
-
   /* Extract t1 and write public key */
   polyveck_caddq(&t1);
   polyveck_power2round(&t1, &t0, &t1);

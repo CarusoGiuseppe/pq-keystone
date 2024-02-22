@@ -28,7 +28,7 @@ void hash_finalize(void* md, hash_ctx* hash_ctx)
 void sign(void* sign, const void* data, size_t len,const unsigned char* private_key, unsigned char* tmp, shake256_context *rng)
 { 
   size_t sig_len;
-  falcon_sign_dyn(rng, sign, &sig_len, FALCON_SIG_CT, private_key, FALCON_PRIVKEY_SIZE(9), data, len, tmp, FALCON_TMPSIZE_SIGNDYN(9));
+  falcon_sign_dyn(rng, sign, &sig_len, FALCON_SIG_CT, private_key, FALCON_PRIVKEY_SIZE(LOGN_PARAM), data, len, tmp, FALCON_TMPSIZE_SIGNDYN(LOGN_PARAM));
 }
 
 int kdf(const unsigned char* salt, size_t salt_len,

@@ -10,6 +10,7 @@
 #include "platform-hook.h"
 #include "sm-sbi-opensbi.h"
 #include "falcon512_sm/my_string.h"
+//#include "dilithium_sm/api.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/riscv_barrier.h>
@@ -41,9 +42,9 @@ SIG_CT SIZE: 1577
 
 // Variable used to pass the all that is needed to the SM to properly work
 extern byte sanctum_CDI[64];
-extern byte sanctum_cert_sm[2065]; //2065
-extern byte sanctum_cert_root[1883];//1883
-extern byte sanctum_cert_man[1903];//1903
+extern byte sanctum_cert_sm[2065]; 
+extern byte sanctum_cert_root[1883];
+extern byte sanctum_cert_man[1903];
 extern int sanctum_length_cert;
 extern int sanctum_length_cert_root;
 extern int sanctum_length_cert_man;
@@ -59,7 +60,7 @@ byte sm_signature[FALCON_512_SIG_SIZE] = { 0, };
 byte sm_public_key[FALCON_512_PK_SIZE] = { 0, };
 byte sm_private_key[FALCON_512_SK_SIZE] = { 0, };
 byte dev_public_key[FALCON_512_PK_SIZE] = { 0, };
-byte tmp[FALCON_TMPSIZE_SIGNDYN(9)];
+byte tmp[FALCON_TMPSIZE_SIGNDYN(LOGN_PARAM)];
 byte hash_for_verification[64];
 
 mbedtls_x509_crt uff_cert_sm;
@@ -79,7 +80,6 @@ int length_cert_root;
 int length_cert_man;
 int length_cert;
 //falcon security parameter
-static int logn_test = 9;
 
 
 char* validation(mbedtls_x509_crt cert);
@@ -311,14 +311,14 @@ void sm_copy_key()
 
 /********************VERIFY CERTIFICATES SIGNATURES**********************/
 
-  int falcon_tmpvrfy_size_test = FALCON_TMPSIZE_SIGNDYN(logn_test);
+  int falcon_tmpvrfy_size_test = FALCON_TMPSIZE_SIGNDYN(LOGN_PARAM);
   sha3_init(&ctx_hash, 64);
   sha3_update(&ctx_hash, uff_cert_sm.tbs.p, uff_cert_sm.tbs.len);
   sha3_final(hash_for_verification, &ctx_hash);
   
   sbi_printf("[SM] Verifying the chain signatures of the certificates until the man cert...\n\n");
   
-  if((falcon_verify(uff_cert_sm.sig.p, uff_cert_sm.sig.len, FALCON_SIG_CT, uff_cert_root.pk.pk_ctx.pub_key, FALCON_PUBKEY_SIZE(logn_test), hash_for_verification, 64, tmp, falcon_tmpvrfy_size_test)) != 0){
+  if((falcon_verify(uff_cert_sm.sig.p, uff_cert_sm.sig.len, FALCON_SIG_CT, uff_cert_root.pk.pk_ctx.pub_key, FALCON_PUBKEY_SIZE(LOGN_PARAM), hash_for_verification, 64, tmp, falcon_tmpvrfy_size_test)) != 0){
     sbi_printf("[SM] Error verifying the signature of the ECA certificate\n\n");
     sbi_hart_hang();
   }
@@ -331,7 +331,7 @@ void sm_copy_key()
     sha3_final(hash_for_verification, &ctx_hash);
     //hash_for_verification[0] = 0x0;
     
-    if(falcon_verify(uff_cert_root.sig.p, uff_cert_root.sig.len, FALCON_SIG_CT, uff_cert_man.pk.pk_ctx.pub_key, FALCON_PUBKEY_SIZE(logn_test), hash_for_verification, 64, tmp, falcon_tmpvrfy_size_test) != 0){
+    if(falcon_verify(uff_cert_root.sig.p, uff_cert_root.sig.len, FALCON_SIG_CT, uff_cert_man.pk.pk_ctx.pub_key, FALCON_PUBKEY_SIZE(LOGN_PARAM), hash_for_verification, 64, tmp, falcon_tmpvrfy_size_test) != 0){
       sbi_printf("[SM] Error verifying the signature of the DRK certificate\n\n");
       sbi_hart_hang();
     }
@@ -352,7 +352,6 @@ void sm_copy_key()
 
     sbi_memcpy(dev_public_key, uff_cert_man.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE);
     sbi_memcpy(ECASM_pk, uff_cert_sm.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE);
-    
     sbi_printf("[SM] Public Keys extracted from certs generated in the bootrom\n");
     
     sbi_printf("\nMANUFACTURER PUBLIC KEY:\n");

@@ -28,10 +28,11 @@ clean:
 bootrom_sources = \
 	./bootloader.S \
 	./bootloader.c \
-	./falcon512/*.c \
-	./ed25519/*.c \
 	./sha3/*.c \
-	./x509custom/*.c
+	./x509custom/*.c \
+	./falcon512/*.c #\
+	./dilithium/*.c \
+	./ed25519/*.c 
 
 
 %.elf: $(bootrom_sources) bootloader.lds

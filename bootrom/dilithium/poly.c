@@ -121,9 +121,9 @@ void poly_shiftl(poly *a) {
 **************************************************/
 void poly_ntt(poly *a) {
   DBENCH_START();
-
+  //the function below stalls
   ntt(a->coeffs);
-
+  
   DBENCH_STOP(*tmul);
 }
 

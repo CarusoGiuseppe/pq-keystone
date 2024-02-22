@@ -84,6 +84,7 @@ void polyvecl_ntt(polyvecl *v) {
 
   for(i = 0; i < L; ++i)
     poly_ntt(&v->vec[i]);
+  
 }
 
 void polyvecl_invntt_tomont(polyvecl *v) {

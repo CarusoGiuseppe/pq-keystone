@@ -188,16 +188,16 @@ int
 Report::checkSignaturesOnly(const byte* dev_public_key) {
   int sm_valid      = 0;
   int enclave_valid = 0;
-  unsigned char tmp[FALCON_TMPSIZE_VERIFY(9)];
+  unsigned char tmp[FALCON_TMPSIZE_VERIFY(LOGN_PARAM)];
 
   /* verify SM report */
   sm_valid = falcon_verify(
       report.sm.signature, FALCON_512_SIG_SIZE, FALCON_SIG_CT, dev_public_key, FALCON_512_PK_SIZE, reinterpret_cast<byte*>(&report.sm), MDSIZE + FALCON_512_PK_SIZE,
-      tmp, FALCON_TMPSIZE_VERIFY(9));
+      tmp, FALCON_TMPSIZE_VERIFY(LOGN_PARAM));
   /* verify Enclave report */
   enclave_valid = falcon_verify(
       report.enclave.signature, FALCON_512_SIG_SIZE, FALCON_SIG_CT, report.sm.public_key, FALCON_512_PK_SIZE, reinterpret_cast<byte*>(&report.enclave), MDSIZE + sizeof(uint64_t) + report.enclave.data_len,
-      tmp, FALCON_TMPSIZE_VERIFY(9));
+      tmp, FALCON_TMPSIZE_VERIFY(LOGN_PARAM));
   //the return values are '0' if the signatures are correct, so for correctness of the if condition evaluation we negate the value
   return !(sm_valid && enclave_valid);
 }

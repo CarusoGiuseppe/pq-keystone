@@ -29,7 +29,7 @@ static spinlock_t encl_lock = SPIN_LOCK_INITIALIZER;
 extern void save_host_regs(void);
 extern void restore_host_regs(void);
 extern byte dev_public_key[897];
-extern byte tmp[FALCON_TMPSIZE_SIGNDYN(9)];
+extern byte tmp[FALCON_TMPSIZE_SIGNDYN(LOGN_PARAM)];
 extern byte CDI[64]; 
 extern byte ECASM_pk[897]; 
 extern byte ECASM_priv[1281]; 
@@ -45,7 +45,7 @@ extern int length_cert_root;
 extern int length_cert;
 extern shake256_context rng;
 struct report report;
-byte sign_tmp[FALCON_SIG_CT_SIZE(9)];
+byte sign_tmp[FALCON_SIG_CT_SIZE(LOGN_PARAM)];
 
 /****************************
  *
@@ -364,7 +364,6 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   unsigned char serial[] = {0x0};
   unsigned long ret;
   int region, shared_region;
-  int logn_test = 9;
   enclave_id eid; 
   sha3_ctx_t hash_ctx_to_use;
   const unsigned char OID_algo[] = {0x02,0x10,0x03,0x48,0x01,0x65,0x03,0x04,0x02,0x0A};
@@ -457,7 +456,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
    
     shake256_init_prng_from_seed(&rng, enclaves[eid].CDI, 32);
 
-    if(falcon_keygen_make(&rng, logn_test, enclaves[eid].local_att_priv, FALCON_PRIVKEY_SIZE(logn_test), enclaves[eid].local_att_pub, FALCON_PUBKEY_SIZE(logn_test), tmp, FALCON_TMPSIZE_KEYGEN(logn_test)) != 0)
+    if(falcon_keygen_make(&rng, LOGN_PARAM, enclaves[eid].local_att_priv, FALCON_PRIVKEY_SIZE(LOGN_PARAM), enclaves[eid].local_att_pub, FALCON_PUBKEY_SIZE(LOGN_PARAM), tmp, FALCON_TMPSIZE_KEYGEN(LOGN_PARAM)) != 0)
       {
         sbi_printf("\n[SM] Error during PQ keypair generation\n");
         goto unlock;
@@ -824,9 +823,8 @@ unsigned long create_keypair(enclave_id eid, unsigned char* pk, int seed_enc){
   unsigned char seed[PRIVATE_KEY_SIZE];
   unsigned char pk_app[FALCON_512_PK_SIZE]; //pqc
   unsigned char sk_app[FALCON_512_SK_SIZE]; //pqc
-  int logn_test = 9;
   //tmp buffer to store intermediate values in the key generation process
-  unsigned int falcon_tmpkeygen_size_test = FALCON_TMPSIZE_KEYGEN(logn_test);
+  unsigned int falcon_tmpkeygen_size_test = FALCON_TMPSIZE_KEYGEN(LOGN_PARAM);
   //byte tmp[falcon_tmpkeygen_size_test];
   unsigned char app[65];
 
@@ -844,7 +842,7 @@ unsigned long create_keypair(enclave_id eid, unsigned char* pk, int seed_enc){
 
   shake256_init_prng_from_seed(&rng, seed, 64);
 
-  falcon_keygen_make(&rng, logn_test, sk_app, FALCON_PRIVKEY_SIZE(logn_test), pk_app, FALCON_PUBKEY_SIZE(logn_test),tmp,falcon_tmpkeygen_size_test);
+  falcon_keygen_make(&rng, LOGN_PARAM, sk_app, FALCON_PRIVKEY_SIZE(LOGN_PARAM), pk_app, FALCON_PUBKEY_SIZE(LOGN_PARAM),tmp,falcon_tmpkeygen_size_test);
   
   //ed25519_create_keypair(pk_app, sk_app, seed); //pqc
   if(enclaves[eid].n_keypair == 0){
@@ -893,9 +891,8 @@ unsigned long do_crypto_op(enclave_id eid, int flag, unsigned char* data, int da
   unsigned char fin_hash[64];
   unsigned char sign[FALCON_512_SIG_SIZE];
   int pos = -1;
-  int logn_test = 9;
   //tmp buffer to store intermediate values in the signature process
-  unsigned int falcon_tmpsign_size_test = FALCON_TMPSIZE_SIGNDYN(logn_test);
+  unsigned int falcon_tmpsign_size_test = FALCON_TMPSIZE_SIGNDYN(LOGN_PARAM);
   //byte tmp_sig[falcon_tmpsign_size_test];
   size_t sig_len;
 
@@ -918,7 +915,7 @@ unsigned long do_crypto_op(enclave_id eid, int flag, unsigned char* data, int da
       sha3_final(fin_hash, &ctx_hash);
 
       //ed25519_sign(sign, fin_hash, 64, enclaves[eid].local_att_pub, enclaves[eid].local_att_priv);
-      falcon_sign_dyn(&rng, sign, &sig_len, FALCON_SIG_CT, ECASM_priv, FALCON_PRIVKEY_SIZE(logn_test), fin_hash, 64, tmp, falcon_tmpsign_size_test);
+      falcon_sign_dyn(&rng, sign, &sig_len, FALCON_SIG_CT, ECASM_priv, FALCON_PRIVKEY_SIZE(LOGN_PARAM), fin_hash, 64, tmp, falcon_tmpsign_size_test);
       //ed25519_sign(sign, fin_hash, 64, ECASM_pk, ECASM_priv);
       
       my_memcpy(out_data, sign, sig_len);
@@ -940,7 +937,7 @@ unsigned long do_crypto_op(enclave_id eid, int flag, unsigned char* data, int da
         return -1;
 
       //ed25519_sign(sign, data, data_len, enclaves[eid].pk_array[pos], enclaves[eid].sk_array[pos]);
-      falcon_sign_dyn(&rng, sign, &sig_len, FALCON_SIG_CT, enclaves[eid].sk_array[pos], FALCON_PRIVKEY_SIZE(logn_test), data, data_len, sign_tmp, falcon_tmpsign_size_test);
+      falcon_sign_dyn(&rng, sign, &sig_len, FALCON_SIG_CT, enclaves[eid].sk_array[pos], FALCON_PRIVKEY_SIZE(LOGN_PARAM), data, data_len, sign_tmp, falcon_tmpsign_size_test);
 
       // Providing the signature
       my_memcpy(out_data, sign, sig_len);

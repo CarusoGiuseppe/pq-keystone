@@ -14,7 +14,6 @@ keystone-sm-headers += crypto.h ed25519/ed25519.h ed25519/fe.h ed25519/fixedint.
                         falcon512_sm/falcon.h  falcon512_sm/fpr.h \
                         falcon512_sm/inner.h falcon512_sm/my_string.h \
                         x509custom_sm/x509custom.h x509custom_sm/oid_custom.h #\
-                        falcon512_sm/deterministic.h falcon512_sm/fixedint.h \
                         dilithium_sm/aes256ctr.h dilithium_sm/api.h dilithium_sm/config.h \
                         dilithium_sm/fips202.h dilithium_sm/my_string.h dilithium_sm/ntt.h \
                         dilithium_sm/packing.h dilithium_sm/params.h dilithium_sm/poly.h \
@@ -50,7 +49,6 @@ keystone-sm-sources += crypto.c sha3/sha3.c ed25519/fe.c ed25519/ge.c ed25519/ke
                         falcon512_sm/my_string.c falcon512_sm/rng.c falcon512_sm/shake.c \
                         falcon512_sm/sign.c falcon512_sm/vrfy.c falcon512_sm/codec.c \
                         falcon512_sm/common.c x509custom_sm/x509custom.c #\
-                        falcon512_sm/deterministic.c \
                         dilithium_sm/aes256ctr.c dilithium_sm/symmetric-shake.c \
                         dilithium_sm/fips202.c dilithium_sm/my_string.c dilithium_sm/ntt.c \
                         dilithium_sm/packing.c dilithium_sm/poly.c \

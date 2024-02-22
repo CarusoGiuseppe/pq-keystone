@@ -402,7 +402,9 @@
  *   ecdsa-with-SHA2(3) 4 } */
 #define MBEDTLS_OID_ECDSA_SHA512            MBEDTLS_OID_ANSI_X9_62_SIG_SHA2 "\x04"
 
-//sostituire qua gli oid in maniera decente e fatta bene per le due versioni di falcon
+#define MBEDTLS_OID_FALCON512_SHAKE256      "\x2B\x06\x01\x04\x01\x81\x8E\x33\x87\x67\x02\x03\x08\x01"
+
+#define MBEDTLS_OID_FALCON1024_SHAKE256     "\x2B\x06\x01\x04\x01\x081\x8E\x33\x87\x67\x02\x02\x08\x01"
 
 
 

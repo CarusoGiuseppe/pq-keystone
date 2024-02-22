@@ -140,7 +140,7 @@ typedef __uint8_t uint8_t;
 /** \} name X509 Error codes */
 #define MBEDTLS_ERR_ASN1_INVALID_LENGTH                   -0x0064
 //FALCON
-#define LOGN_TEST 9
+#define LOGN_PARAM 9
 
 #define ADD_STRLEN(s)     s, sizeof(s) - 1
 #define MBEDTLS_OID_SIZE(x) (sizeof(x) - 1)
@@ -255,11 +255,11 @@ typedef struct mbedtls_falcon_context {
                                                   *    code. Its meaning might change without
                                                   *    notice. */
     size_t len;                 /*!<  The size of \p N in Bytes. */
-    #if LOGN_TEST == 9
+    #if LOGN_PARAM == 9
         unsigned char pub_key[897];
         unsigned char priv_key[1281];
     #endif
-    #if LOGN_TEST == 10
+    #if LOGN_PARAM == 10
         unsigned char pub_key[1793];
         unsigned char priv_key[2305];
     #endif

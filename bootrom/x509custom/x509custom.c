@@ -27,13 +27,13 @@ const x509_attr_descriptor_t *x509_attr_descr_from_name(const char *name, size_t
 size_t falcon_get_bitlen()
 {
     //pub key size returned in bits
-    return 8 * FALCON_PUBKEY_SIZE(LOGN_TEST);
+    return 8 * FALCON_PUBKEY_SIZE(LOGN_PARAM);
 }
 
 //FALCON
 int falcon_can_do(mbedtls_pk_type_t type)
 {   
-    #if LOGN_TEST == 9
+    #if LOGN_PARAM == 9
         return type == MBEDTLS_PK_FALCON512;
     #else
         return type = MBEDTLS_PK_FALCON1024;
@@ -109,10 +109,10 @@ int mbedtls_falcon_write_signature_restartable(mbedtls_falcon_context *ctx,
   shake256_context rng;  
   byte seed_test[5] = {0x01, 0x01, 0x01, 0x01, 0x01};
   shake256_init_prng_from_seed(&rng, seed_test, 5);
-  unsigned int falcon_tmpsign_size_test = FALCON_TMPSIZE_SIGNDYN(LOGN_TEST);
+  unsigned int falcon_tmpsign_size_test = FALCON_TMPSIZE_SIGNDYN(LOGN_PARAM);
   byte tmp_sig[falcon_tmpsign_size_test];
     
-  falcon_sign_dyn(&rng, sig, &sig_size, FALCON_SIG_CT, ctx->priv_key, FALCON_PRIVKEY_SIZE(LOGN_TEST), hash, sizeof(hash), tmp_sig, falcon_tmpsign_size_test);
+  falcon_sign_dyn(&rng, sig, &sig_size, FALCON_SIG_CT, ctx->priv_key, FALCON_PRIVKEY_SIZE(LOGN_PARAM), hash, sizeof(hash), tmp_sig, falcon_tmpsign_size_test);
   *slen = sig_size;
   return 0;
 
@@ -145,14 +145,14 @@ int falcon_verify_wrap(void *ctx, mbedtls_md_type_t md_alg,
                        const unsigned char *sig, size_t sig_len)
 {
     mbedtls_falcon_context *falcon = (mbedtls_falcon_context *) ctx;
-    byte tmp[FALCON_TMPSIZE_VERIFY(LOGN_TEST)];
-    return falcon_verify(sig, sig_len, FALCON_SIG_CT, falcon->pub_key, FALCON_PUBKEY_SIZE(LOGN_TEST), hash, sizeof(hash), tmp, FALCON_TMPSIZE_VERIFY(LOGN_TEST));
+    byte tmp[FALCON_TMPSIZE_VERIFY(LOGN_PARAM)];
+    return falcon_verify(sig, sig_len, FALCON_SIG_CT, falcon->pub_key, FALCON_PUBKEY_SIZE(LOGN_PARAM), hash, sizeof(hash), tmp, FALCON_TMPSIZE_VERIFY(LOGN_PARAM));
 }
     
 
 //FALCON
 const mbedtls_pk_info_t mbedtls_falcon_info = {
-    #if LOGN_TEST == 9
+    #if LOGN_PARAM == 9
         MBEDTLS_PK_FALCON512,
         "FALCON512",
     #else
@@ -232,7 +232,7 @@ mbedtls_pk_type_t mbedtls_pk_get_type(const mbedtls_pk_context *ctx)
 //FALCON
 int pk_set_falconpubkey(unsigned char **p, mbedtls_falcon_context *falcon){
 
-    int len = FALCON_PUBKEY_SIZE(LOGN_TEST);
+    int len = FALCON_PUBKEY_SIZE(LOGN_PARAM);
     /*
     for(int i = 0; i < len; i++){
         falcon->pub_key[i] = (*p)[i];
@@ -247,7 +247,7 @@ int pk_set_falconpubkey(unsigned char **p, mbedtls_falcon_context *falcon){
 //FALCON
 int pk_get_falconpubkey(unsigned char **p, mbedtls_falcon_context *falcon){
 
-    int len = FALCON_PUBKEY_SIZE(LOGN_TEST);
+    int len = FALCON_PUBKEY_SIZE(LOGN_PARAM);
     /*
     for(int i = 0; i < len; i++){
         falcon->pub_key[i] = (*p)[i];
@@ -261,7 +261,7 @@ int pk_get_falconpubkey(unsigned char **p, mbedtls_falcon_context *falcon){
 //FALCON
 int pk_set_falconprivkey(unsigned char **p, mbedtls_falcon_context *falcon){
 
-   int len = FALCON_PRIVKEY_SIZE(LOGN_TEST);
+   int len = FALCON_PRIVKEY_SIZE(LOGN_PARAM);
     /*for(int i = 0; i < len; i++){
         falcon->priv_key[i] = (*p)[i];
     } */
@@ -276,7 +276,7 @@ int mbedtls_pk_parse_public_key(mbedtls_pk_context *ctx, const unsigned char *ke
     
     unsigned char *p;
     const mbedtls_pk_info_t *pk_info;
-    #if LOGN_TEST == 9
+    #if LOGN_PARAM == 9
         if ((pk_info = mbedtls_pk_info_from_type(MBEDTLS_PK_FALCON512)) == NULL ) {
             return MBEDTLS_ERR_PK_UNKNOWN_PK_ALG;
         }
@@ -342,7 +342,7 @@ int mbedtls_x509write_crt_der(mbedtls_x509write_cert *ctx, unsigned char *buf, s
     const char *sig_oid = NULL;
     size_t sig_oid_len = 0;
     unsigned char *c, *c2;
-    unsigned char sig[FALCON_SIG_CT_SIZE(LOGN_TEST)];
+    unsigned char sig[FALCON_SIG_CT_SIZE(LOGN_PARAM)];
     unsigned char hash[64];
 
     size_t sub_len = 0, pub_len = 0, sig_and_oid_len = 0, sig_len;
@@ -359,7 +359,7 @@ int mbedtls_x509write_crt_der(mbedtls_x509write_cert *ctx, unsigned char *buf, s
     //se gli aggiungo la sua dimensione, ovvero size
     //il risultato sarà un puntatore alla fine del buffer, ovvero c
     c = buf + size;
-    #if LOGN_TEST == 9
+    #if LOGN_PARAM == 9
         pk_alg = MBEDTLS_PK_FALCON512;
     #else
         pk_alg = MBEDTLS_PK_FALCON1024;
@@ -510,12 +510,12 @@ int mbedtls_x509write_crt_der(mbedtls_x509write_cert *ctx, unsigned char *buf, s
     shake256_context rng;  
     byte seed_test[5] = {0x01, 0x01, 0x01, 0x01, 0x01};
     shake256_init_prng_from_seed(&rng, seed_test, 5);
-    unsigned int falcon_tmpsign_size_test = FALCON_TMPSIZE_SIGNDYN(LOGN_TEST);
+    unsigned int falcon_tmpsign_size_test = FALCON_TMPSIZE_SIGNDYN(LOGN_PARAM);
     byte tmp_sig[falcon_tmpsign_size_test];
-    //byte sig[FALCON_SIG_CT_SIZE(LOGN_TEST)];
-    size_t sig_len1 = FALCON_SIG_CT_SIZE(LOGN_TEST);
+    //byte sig[FALCON_SIG_CT_SIZE(LOGN_PARAM)];
+    size_t sig_len1 = FALCON_SIG_CT_SIZE(LOGN_PARAM);
     
-    falcon_sign_dyn(&rng, sig, &sig_len1, FALCON_SIG_CT, ctx->issuer_key->pk_ctx.priv_key, FALCON_PRIVKEY_SIZE(LOGN_TEST), hash, 64, tmp_sig, falcon_tmpsign_size_test);
+    falcon_sign_dyn(&rng, sig, &sig_len1, FALCON_SIG_CT, ctx->issuer_key->pk_ctx.priv_key, FALCON_PRIVKEY_SIZE(LOGN_PARAM), hash, 64, tmp_sig, falcon_tmpsign_size_test);
     sig_len = sig_len1;
     
     /* Move CRT to the front of the buffer to have space
@@ -642,36 +642,13 @@ int mbedtls_pk_write_pubkey_der(const mbedtls_pk_context *key, unsigned char *bu
     MBEDTLS_ASN1_CHK_ADD(len, mbedtls_asn1_write_len(&c, buf, len));
     MBEDTLS_ASN1_CHK_ADD(len, mbedtls_asn1_write_tag(&c, buf, MBEDTLS_ASN1_BIT_STRING));
 
-    //TODO INSERT REGULAR OID IN OID_CUSTOM.H AND MODIFY BELOW 
-    #if LOGN_TEST == 9
-        const char oid[]= {
-        "\x2B" "\x06" "\x01"
-         "\x04" "\x01" "\x81"
-          "\x8E" "\x33" "\x87"
-           "\x67" "\x02" "\x03"
-            "\x08" "\x01"};
-        oid_len = sizeof(
-        "\x2B" "\x06" "\x01"
-         "\x04" "\x01" "\x81"
-          "\x8E" "\x33" "\x87"
-           "\x67" "\x02" "\x03"
-            "\x08" "\x01") - 1;
+    #if LOGN_PARAM == 9
+        oid_len = sizeof(MBEDTLS_OID_FALCON512_SHAKE256) - 1;
+        MBEDTLS_ASN1_CHK_ADD(len, mbedtls_asn1_write_falcon_identifier(&c, buf, MBEDTLS_OID_FALCON512_SHAKE256, oid_len));
     #else
-        const char oid[]= {
-        "\x2B" "\x06" "\x01"
-         "\x04" "\x01" "\x081"
-          "\x8E" "\x33" "\x87"
-           "\x67" "\x02" "\x02"
-            "\x08" "\x01"}
-        oid_len = sizeof(
-        "\x2B" "\x06" "\x01"
-         "\x04" "\x01" "\x81"
-          "\x8E" "\x33" "\x87"
-           "\x67" "\x02" "\x02"
-            "\x08" "\x01") - 1;
+        oid_len = sizeof(MBEDTLS_OID_FALCON1024_SHAKE256) - 1;
+        MBEDTLS_ASN1_CHK_ADD(len, mbedtls_asn1_write_falcon_identifier(&c, buf, MBEDTLS_OID_FALCON1024_SHAKE256, oid_len));
     #endif
-
-    MBEDTLS_ASN1_CHK_ADD(len, mbedtls_asn1_write_falcon_identifier(&c, buf, oid, oid_len));
     
     MBEDTLS_ASN1_CHK_ADD(len, mbedtls_asn1_write_len(&c, buf, len));
     
@@ -694,7 +671,7 @@ int mbedtls_pk_write_pubkey(unsigned char **p, unsigned char *start, const mbedt
 int pk_write_falcon_pubkey(unsigned char **p, unsigned char *start, mbedtls_falcon_context falcon){
 
     //int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
-    size_t len = FALCON_PUBKEY_SIZE(LOGN_TEST);
+    size_t len = FALCON_PUBKEY_SIZE(LOGN_PARAM);
     unsigned char buf[len];
 
     for(int i = 0; i < len; i ++){
@@ -1602,7 +1579,7 @@ int mbedtls_x509_get_sig_alg_mod(const mbedtls_x509_buf_crt *sig_oid, const mbed
     if (*sig_opts != NULL) {
         return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
     }
-    #if LOGN_TEST == 9
+    #if LOGN_PARAM == 9
         *pk_alg = MBEDTLS_PK_FALCON512;
     #else
         *pk_alg = MBEDTLS_PK_FALCON1024;
@@ -2219,7 +2196,7 @@ int pk_get_pk_alg(unsigned char **p,
         return MBEDTLS_ERROR_ADD(MBEDTLS_ERR_PK_INVALID_ALG, ret);
     }
 
-    #if LOGN_TEST == 9
+    #if LOGN_PARAM == 9
         *pk_alg = MBEDTLS_PK_FALCON512;
     #else 
         *pk_alg = MBEDTLS_PK_FALCON1024;

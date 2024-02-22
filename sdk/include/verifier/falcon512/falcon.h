@@ -217,6 +217,13 @@ extern "C" {
  */
 
 /*
+ * The macro listed below is an addition done by Giuseppe Caruso
+ * to provide a simpler and easier way to set the LOGN parameters
+ * and to include it easier in the implementation
+*/
+#define LOGN_PARAM 9
+
+/*
  * FALCON_ERR_RANDOM is returned when the library tries to use an
  * OS-provided RNG, but either none is supported, or that RNG fails.
  */
