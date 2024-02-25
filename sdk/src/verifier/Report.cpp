@@ -8,7 +8,6 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "ed25519/ed25519.h"
 #include "falcon512/falcon.h"
 
 using json11::Json;

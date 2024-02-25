@@ -74,11 +74,11 @@ struct enclave
 
   /* measurement */
   byte hash[MDSIZE];
-  byte sign[FALCON_512_SIG_SIZE]; //SIGNATURE_SIZE
+  byte sign[FALCON_SIG_SIZE]; //SIGNATURE_SIZE
 
   byte CDI[64]; 
-  byte local_att_pub[FALCON_512_PK_SIZE]; //32
-  byte local_att_priv[FALCON_512_SK_SIZE]; //64
+  byte local_att_pub[FALCON_PK_SIZE]; //32
+  byte local_att_priv[FALCON_SK_SIZE]; //64
   /*
   the falcon keygen stalls with the tmp allocated in the stack
   */
@@ -90,11 +90,11 @@ struct enclave
   mbedtls_pk_context subj_key;
   mbedtls_pk_context issu_key;
 
- // byte pk_ldev[FALCON_512_PK_SIZE]; //32
- // byte sk_ldev[FALCON_512_SK_SIZE]; //64
+ // byte pk_ldev[FALCON_PK_SIZE]; //32
+ // byte sk_ldev[FALCON_SK_SIZE]; //64
 /*
-  byte sk_array[2][FALCON_512_SK_SIZE]; //32-10
-  byte pk_array[2][FALCON_512_PK_SIZE]; //64-10
+  byte sk_array[2][FALCON_SK_SIZE]; //32-10
+  byte pk_array[2][FALCON_PK_SIZE]; //64-10
   int n_keypair;
 */
   /* parameters */
@@ -114,19 +114,19 @@ struct enclave_report
   byte hash[MDSIZE];
   uint64_t data_len;
   byte data[ATTEST_DATA_MAXLEN];
-  byte signature[FALCON_512_SIG_SIZE]; //SIGNATURE_SIZE
+  byte signature[FALCON_SIG_SIZE]; //SIGNATURE_SIZE
 };
 struct sm_report
 {
   byte hash[MDSIZE];
-  byte public_key[FALCON_512_PK_SIZE]; //PUBLIC_KEY_SIZE
-  byte signature[FALCON_512_SIG_SIZE]; //SIGNATURE_SIZE
+  byte public_key[FALCON_PK_SIZE]; //PUBLIC_KEY_SIZE
+  byte signature[FALCON_SIG_SIZE]; //SIGNATURE_SIZE
 };
 struct report
 {
   struct enclave_report enclave;
   struct sm_report sm;
-  byte dev_public_key[FALCON_512_PK_SIZE]; //PUBLIC_KEY_SIZE
+  byte dev_public_key[FALCON_PK_SIZE]; //PUBLIC_KEY_SIZE
 };
 
 /* sealing key structure */
@@ -134,7 +134,7 @@ struct report
 struct sealing_key
 {
   uint8_t key[SEALING_KEY_SIZE];
-  uint8_t signature[FALCON_512_SIG_SIZE]; //SIGNATURE_SIZE
+  uint8_t signature[FALCON_SIG_SIZE]; //SIGNATURE_SIZE
 };
 
 /*** SBI functions & external functions ***/

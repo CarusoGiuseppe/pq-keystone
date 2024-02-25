@@ -11,7 +11,6 @@
 #include "sha3/sha3.h"
 #include "sm.h"
 #include "falcon512_sm/falcon.h"
-#include "ed25519/ed25519.h"
 #include <sbi/sbi_timer.h>
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_asm.h>
@@ -28,15 +27,15 @@ static spinlock_t encl_lock = SPIN_LOCK_INITIALIZER;
 
 extern void save_host_regs(void);
 extern void restore_host_regs(void);
-extern byte dev_public_key[897];
+extern byte dev_public_key[FALCON_PK_SIZE];
 extern byte tmp[FALCON_TMPSIZE_SIGNDYN(LOGN_PARAM)];
 extern byte CDI[64]; 
-extern byte ECASM_pk[897]; 
-extern byte ECASM_priv[1281]; 
+extern byte ECASM_pk[FALCON_PK_SIZE]; 
+extern byte ECASM_priv[FALCON_SK_SIZE]; 
 //extern mbedtls_x509_crt uff_cert_sm;
 extern byte sm_hash[MDSIZE];
-extern byte sm_signature[FALCON_512_SIG_SIZE];
-extern byte sm_public_key[FALCON_512_PK_SIZE];
+extern byte sm_signature[FALCON_SIG_SIZE];
+extern byte sm_public_key[FALCON_PK_SIZE];
 extern byte cert_sm[2065]; 
 extern byte cert_root[1883]; 
 extern byte cert_man[1903];
@@ -479,17 +478,17 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
     
     mbedtls_pk_init(&enclaves[eid].issu_key);
     
-    if(mbedtls_pk_parse_public_key(&enclaves[eid].issu_key, ECASM_priv, FALCON_512_SK_SIZE, 1)){
+    if(mbedtls_pk_parse_public_key(&enclaves[eid].issu_key, ECASM_priv, FALCON_SK_SIZE, 1)){
       sbi_printf("\n[SM] Error parsing issuer private key\n");
       goto unlock;
     }
 
-    if(mbedtls_pk_parse_public_key(&enclaves[eid].issu_key, ECASM_pk, FALCON_512_PK_SIZE, 0)){
+    if(mbedtls_pk_parse_public_key(&enclaves[eid].issu_key, ECASM_pk, FALCON_PK_SIZE, 0)){
       sbi_printf("\n[SM] Error parsing issuer public key\n");
       goto unlock;
     }
     
-    if(mbedtls_pk_parse_public_key(&enclaves[eid].subj_key, enclaves[eid].local_att_pub, FALCON_512_PK_SIZE, 0)){
+    if(mbedtls_pk_parse_public_key(&enclaves[eid].subj_key, enclaves[eid].local_att_pub, FALCON_PK_SIZE, 0)){
       sbi_printf("\n[SM] Error parsing subject public key\n");
       goto unlock;
     }
@@ -536,7 +535,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
     enclaves[eid].crt_local_att_der_length = effe_len_cert_der;
     my_memcpy(enclaves[eid].crt_local_att_der, cert_real, effe_len_cert_der);
     //enclaves[eid].n_keypair = 0;
-      base64_encode(enclaves[eid].local_att_pub, FALCON_512_PK_SIZE, 0);
+      base64_encode(enclaves[eid].local_att_pub, FALCON_PK_SIZE, 0);
       base64_encode(enclaves[eid].crt_local_att_der, effe_len_cert_der, 1); 
   }
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
@@ -611,8 +610,8 @@ unsigned long destroy_enclave(enclave_id eid)
     //1.b free pmp region
     pmp_unset_global(rid);
     pmp_region_free_atomic(rid);
-    sbi_memset((void*)enclaves[eid].local_att_pub, 0, FALCON_512_PK_SIZE);
-    sbi_memset((void*)enclaves[eid].local_att_priv, 0, FALCON_512_SK_SIZE);
+    sbi_memset((void*)enclaves[eid].local_att_pub, 0, FALCON_PK_SIZE);
+    sbi_memset((void*)enclaves[eid].local_att_priv, 0, FALCON_SK_SIZE);
     sbi_memset((void*)enclaves[eid].cert_der, 0, 2500);
     sbi_memset((void*)&enclaves[eid].crt_local_att, 0, sizeof(enclaves[eid].crt_local_att));
     sbi_memset((void*)enclaves[eid].crt_local_att_der, 0, 2037);
@@ -765,10 +764,10 @@ unsigned long attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
 
   spin_unlock(&encl_lock); // Don't need to wait while signing, which might take some time
 
-  my_memcpy(report.dev_public_key, dev_public_key, FALCON_512_PK_SIZE);
+  my_memcpy(report.dev_public_key, dev_public_key, FALCON_PK_SIZE);
   my_memcpy(report.sm.hash, sm_hash, MDSIZE);
-  my_memcpy(report.sm.public_key, sm_public_key, FALCON_512_PK_SIZE);
-  my_memcpy(report.sm.signature, sm_signature, FALCON_512_SIG_SIZE);
+  my_memcpy(report.sm.public_key, sm_public_key, FALCON_PK_SIZE);
+  my_memcpy(report.sm.signature, sm_signature, FALCON_SIG_SIZE);
   my_memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);
 
   sm_sign(report.enclave.signature,

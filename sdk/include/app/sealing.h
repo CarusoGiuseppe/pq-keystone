@@ -14,14 +14,20 @@
 #ifndef SEALING_H
 #define SEALING_H
 
+#define LOGN_PARAM 9
 #define SEALING_KEY_SIZE 128
 #define SIGNATURE_SIZE 64//64
-#define FALCON_512_SIG_SIZE 809//64
+
+#if LOGN_PARAM == 9
+#define FALCON_SIG_SIZE 809
+#else
+#define FALCON_SIG_SIZE 1577
+#endif
 
 /* sealing key structure */
 struct sealing_key {
   uint8_t key[SEALING_KEY_SIZE];
-  uint8_t signature[FALCON_512_SIG_SIZE];
+  uint8_t signature[FALCON_SIG_SIZE];
 };
 
 #endif /* SEALING_H */

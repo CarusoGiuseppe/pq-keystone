@@ -38,11 +38,55 @@ static const unsigned char sanctum_uds[] = {
 
 typedef unsigned char byte;
 
+/*
+*2^logn is the degree of the falcon algorithm (e.g. 10 is falcon1024)
+*TO SET THE PARAMETERS AND THE FALCON VERSION, CHECK THE FILE falcon.h
+*in which the LOGN_PARAM macro is defined.
+*/
+
+
+/* 
+_FALCON 512_
+PUBLIC KEY SIZE: 897 
+PRIVATE KEY SIZE: 1281 
+TMP BUFFER SIZE: 15879
+SIG_CT SIZE: 809
+*/
+#define FALCON_512_PK_SIZE 897
+#define FALCON_512_SK_SIZE 1281
+#define FALCON_512_SIG_SIZE 809
+
+/*
+_FALCON 1024_
+PUBLIC KEY SIZE: 1793 
+PRIVATE KEY SIZE: 2305 
+TMP BUFFER SIZE: 31751
+SIG_CT SIZE: 1577
+*/
+
+#define FALCON_1024_PK_SIZE 1793
+#define FALCON_1024_SK_SIZE 2305
+#define FALCON_1024_SIG_SIZE 1577
+
+#if LOGN_PARAM == 9
+
+#define FALCON_PK_SIZE FALCON_512_PK_SIZE
+#define FALCON_SK_SIZE FALCON_512_SK_SIZE
+#define FALCON_SIG_SIZE FALCON_512_SIG_SIZE
+
+#else
+
+#define FALCON_PK_SIZE FALCON_1024_PK_SIZE
+#define FALCON_SK_SIZE FALCON_1024_SK_SIZE
+#define FALCON_SIG_SIZE FALCON_1024_SIG_SIZE
+
+#endif
+
 extern byte sanctum_sm_hash[64];
-extern byte sanctum_sm_public_key[897];
-extern byte sanctum_sm_secret_key[1281];
-extern byte sanctum_sm_signature[809];
-extern byte sanctum_ECASM_priv[1281];
+extern byte sanctum_sm_public_key[FALCON_PK_SIZE];
+extern byte sanctum_sm_secret_key[FALCON_SK_SIZE];
+extern byte sanctum_sm_signature[FALCON_SIG_SIZE];
+extern byte sanctum_ECASM_priv[FALCON_SK_SIZE];
 
 /**
  * DEVICE IDENTIFIER COMPOSITION ENGINE PARAMETERS TO SM
@@ -58,22 +102,6 @@ extern int sanctum_length_cert_man;
 #define DRAM_BASE 0x80000000
 
 unsigned int sanctum_sm_size = 0x1fd000;
-/*
-*2^logn is the degree of the falcon algorithm (e.g. 10 is falcon1024)
-*TO SET THE PARAMETERS AND THE FALCON VERSION, CHECK THE FILE falcon.h
-*in which the LOGN_PARAM macro is defined.
-*
-*_FALCON 512_
-*PUBLIC KEY SIZE: 897 
-*PRIVATE KEY SIZE: 1281 
-*TMP BUFFER SIZE: 15879
-*SIG_CT SIZE: 809
-*_FALCON 1024_
-*PUBLIC KEY SIZE: 1793 
-*PRIVATE KEY SIZE: 2305 
-*TMP BUFFER SIZE: 31751
-*SIG_CT SIZE: 1577
-*/
 
 /* Update this to generate valid entropy for target platform*/
 inline byte random_byte(unsigned int i) {
@@ -87,31 +115,17 @@ int bootloader() {
   
   byte scratchpad[128];
   
+  //sha context
   sha3_ctx_t hash_ctx;
   
+  //rng context
   shake256_context rng;
-  byte sanctum_dev_secret_key[1281];
   
-    /* Gathering high quality entropy during boot on embedded devices is
-   * a hard problem. Platforms taking security seriously must provide
-   * a high quality entropy source available in hardware. Platforms
-   * that do not provide such a source must gather their own
-   * entropy. See the Keystone documentation for further
-   * discussion. For testing purposes, we have no entropy generation.
-  */
-
-  for (unsigned int i=0; i < 32; i++) {
-    scratchpad[i] = random_byte(i);
-  }
-
-  shake256_init_prng_from_seed(&rng, scratchpad, 32);
+  byte sanctum_device_root_key_priv[FALCON_SK_SIZE];
   
-  byte sanctum_device_root_key_priv[1281];
-  byte sanctum_device_root_key_pub[897];
+  byte sanctum_device_root_key_pub[FALCON_PK_SIZE];
 
-  byte sanctum_sm_signature_test[809];
-
-  byte sanctum_sm_sign[809];          
+  byte sanctum_sm_sign[FALCON_SIG_SIZE];          
 
   byte buf[324];    
   /*
@@ -121,8 +135,9 @@ int bootloader() {
   pqcrystals_dilithium2_ref_keypair(dil_pk, dil_sk);
 */
   // keypair of the eca in sm
-  byte ECASM_pk[FALCON_PUBKEY_SIZE(LOGN_PARAM)];
-  byte ECASM_priv[FALCON_PRIVKEY_SIZE(LOGN_PARAM)];
+  byte ECASM_pk[FALCON_PK_SIZE];
+
+  byte ECASM_priv[FALCON_SK_SIZE];
   
   
   //buffer to accomodate signature  
@@ -141,6 +156,22 @@ int bootloader() {
   unsigned int falcon_tmpvrfy_size_test = FALCON_TMPSIZE_VERIFY(LOGN_PARAM);
   byte tmp_vrfy[falcon_tmpvrfy_size_test];
 
+
+
+    /* Gathering high quality entropy during boot on embedded devices is
+   * a hard problem. Platforms taking security seriously must provide
+   * a high quality entropy source available in hardware. Platforms
+   * that do not provide such a source must gather their own
+   * entropy. See the Keystone documentation for further
+   * discussion. For testing purposes, we have no entropy generation.
+  */
+
+  for (unsigned int i=0; i < 32; i++) {
+    scratchpad[i] = random_byte(i);
+  }
+
+  shake256_init_prng_from_seed(&rng, scratchpad, 32);
+  
   // TODO: on real device, copy boot image from memory. In simulator, HTIF writes boot image
   
   /* On a real device, the platform must provide a secure root device
@@ -157,13 +188,13 @@ int bootloader() {
   sha3_init(&hash_ctx, 64);
   sha3_update(&hash_ctx, (void*)DRAM_BASE, sanctum_sm_size);
   sha3_final(sanctum_sm_hash, &hash_ctx);
-  falcon_sign_dyn(&rng, sanctum_sm_signature_test, &sig_len, FALCON_SIG_CT, _sanctum_dev_secret_key, FALCON_PRIVKEY_SIZE(LOGN_PARAM), sanctum_sm_hash, 64, tmp_sig, falcon_tmpsign_size_test);
+  falcon_sign_dyn(&rng, sanctum_sm_sign, &sig_len, FALCON_SIG_CT, _sanctum_dev_secret_key, FALCON_SK_SIZE, sanctum_sm_hash, 64, tmp_sig, falcon_tmpsign_size_test);
 
   // Measure SM to verify the signature
   sha3_init(&hash_ctx, 64);
   sha3_update(&hash_ctx, (void *)DRAM_BASE, sanctum_sm_size);
   sha3_final(sanctum_sm_hash, &hash_ctx);
-  if((falcon_verify(sanctum_sm_signature_test, sig_len, FALCON_SIG_CT, _sanctum_dev_public_key, FALCON_PUBKEY_SIZE(LOGN_PARAM), sanctum_sm_hash, 64, tmp_vrfy, falcon_tmpvrfy_size_test)) != 0)
+  if((falcon_verify(sanctum_sm_sign, sig_len, FALCON_SIG_CT, _sanctum_dev_public_key, FALCON_PK_SIZE, sanctum_sm_hash, 64, tmp_vrfy, falcon_tmpvrfy_size_test)) != 0)
   {
     // The return value of the bootloader function is used to check if the secure boot is gone well or not
     return 0;
@@ -180,7 +211,7 @@ int bootloader() {
   shake256_init_prng_from_seed(&rng, sanctum_CDI, sizeof(*sanctum_CDI));
   
   //generate device root key from CDI
-  falcon_keygen_make(&rng, LOGN_PARAM, sanctum_device_root_key_priv, FALCON_PRIVKEY_SIZE(LOGN_PARAM), sanctum_device_root_key_pub, FALCON_PUBKEY_SIZE(LOGN_PARAM),tmp,falcon_tmpkeygen_size_test);
+  falcon_keygen_make(&rng, LOGN_PARAM, sanctum_device_root_key_priv, FALCON_SK_SIZE, sanctum_device_root_key_pub, FALCON_PK_SIZE,tmp,falcon_tmpkeygen_size_test);
   
   // The ECA keys are obtained starting from a seed generated hashing the CDI and the measure of the SM
   unsigned char seed_for_ECA_keys[64];
@@ -192,9 +223,9 @@ int bootloader() {
 
   //rng for the ECA keys
   shake256_init_prng_from_seed(&rng, seed_for_ECA_keys, 64);
-  falcon_keygen_make(&rng, LOGN_PARAM, ECASM_priv, FALCON_PRIVKEY_SIZE(LOGN_PARAM), ECASM_pk, FALCON_PUBKEY_SIZE(LOGN_PARAM), tmp, falcon_tmpkeygen_size_test);
+  falcon_keygen_make(&rng, LOGN_PARAM, ECASM_priv, FALCON_SK_SIZE, ECASM_pk, FALCON_PK_SIZE, tmp, falcon_tmpkeygen_size_test);
 
-  memcpy(sanctum_ECASM_priv, ECASM_priv, FALCON_PRIVKEY_SIZE(LOGN_PARAM));
+  memcpy(sanctum_ECASM_priv, ECASM_priv, FALCON_SK_SIZE);
 
 /**********************************SM CERT GEN*****************************/
   // Create the certificate structure mbedtls_x509write_cert to release the cert of the security monitor
@@ -219,19 +250,19 @@ int bootloader() {
   mbedtls_pk_context issu_key;
   mbedtls_pk_init(&issu_key);
   
-  ret = mbedtls_pk_parse_public_key(&issu_key, sanctum_device_root_key_priv, FALCON_PRIVKEY_SIZE(LOGN_PARAM), 1);
+  ret = mbedtls_pk_parse_public_key(&issu_key, sanctum_device_root_key_priv, FALCON_SK_SIZE, 1);
   if (ret != 0)
   {
     return 0;
   }
 
-  ret = mbedtls_pk_parse_public_key(&issu_key, sanctum_device_root_key_pub, FALCON_PUBKEY_SIZE(LOGN_PARAM), 0);
+  ret = mbedtls_pk_parse_public_key(&issu_key, sanctum_device_root_key_pub, FALCON_PK_SIZE, 0);
   if (ret != 0)
   {
     return 0;
   }
 
-  ret = mbedtls_pk_parse_public_key(&subj_key, ECASM_pk, FALCON_PUBKEY_SIZE(LOGN_PARAM), 0);
+  ret = mbedtls_pk_parse_public_key(&subj_key, ECASM_pk, FALCON_PK_SIZE, 0);
   if (ret != 0)
   {
     return 0;
@@ -279,7 +310,7 @@ int bootloader() {
     return 0;
 
 
-  ret = mbedtls_x509write_crt_der(&cert, cert_der, 4096, NULL, NULL);//, test, &len);
+  ret = mbedtls_x509write_crt_der(&cert, cert_der, 4096, NULL, NULL);
   if (ret != 0)
   {
     effe_len_cert_der = ret;
@@ -414,19 +445,19 @@ int bootloader() {
   mbedtls_pk_context issu_key_test;
   mbedtls_pk_init(&issu_key_test);
   
-  ret = mbedtls_pk_parse_public_key(&issu_key_test, _sanctum_dev_secret_key, FALCON_PRIVKEY_SIZE(LOGN_PARAM), 1);
+  ret = mbedtls_pk_parse_public_key(&issu_key_test, _sanctum_dev_secret_key, FALCON_SK_SIZE, 1);
   if (ret != 0)
   {
     return 0;
   }
 
-  ret = mbedtls_pk_parse_public_key(&issu_key_test, _sanctum_dev_public_key, FALCON_PUBKEY_SIZE(LOGN_PARAM), 0);
+  ret = mbedtls_pk_parse_public_key(&issu_key_test, _sanctum_dev_public_key, FALCON_PK_SIZE, 0);
   if (ret != 0)
   {
     return 0;
   }
 
-  ret = mbedtls_pk_parse_public_key(&subj_key_test, sanctum_device_root_key_pub, FALCON_PUBKEY_SIZE(LOGN_PARAM), 0);
+  ret = mbedtls_pk_parse_public_key(&subj_key_test, sanctum_device_root_key_pub, FALCON_PK_SIZE, 0);
   if (ret != 0)
   {
     return 0;
@@ -448,7 +479,6 @@ int bootloader() {
   {
     return 0;
   }
-  //mbedtls_x509write_crt_set_basic_constraints(&cert_root, 1, 10);
   
   unsigned char cert_der_root[4096];
   int effe_len_cert_der_root;
@@ -482,25 +512,25 @@ int bootloader() {
 /*------------------------------------------------------*/
   // Combine SK_D and H_SM via a hash
   // sm_key_seed <-- H(SK_D, H_SM), truncate to 32B
-  byte scratch[64 + FALCON_PUBKEY_SIZE(LOGN_PARAM)];
+  byte scratch[64 + FALCON_PK_SIZE];
   sha3_init(&hash_ctx, 64);
-  sha3_update(&hash_ctx, sanctum_dev_secret_key, FALCON_PUBKEY_SIZE(LOGN_PARAM));
+  sha3_update(&hash_ctx, _sanctum_dev_secret_key, FALCON_PK_SIZE);
   sha3_update(&hash_ctx, sanctum_sm_hash, sizeof(*sanctum_sm_hash));
   sha3_final(scratchpad, &hash_ctx);
   // Derive {SK_D, PK_D} (device keys) from the first 32 B of the hash (NIST endorses SHA512 truncation as safe)
   shake256_init_prng_from_seed(&rng, scratchpad, 32);
-  falcon_keygen_make(&rng, LOGN_PARAM, sanctum_sm_secret_key, FALCON_PRIVKEY_SIZE(LOGN_PARAM), sanctum_sm_public_key, FALCON_PUBKEY_SIZE(LOGN_PARAM), tmp, falcon_tmpkeygen_size_test);
+  falcon_keygen_make(&rng, LOGN_PARAM, sanctum_sm_secret_key, FALCON_SK_SIZE, sanctum_sm_public_key, FALCON_PK_SIZE, tmp, falcon_tmpkeygen_size_test);
 
   // Endorse the SM
   memcpy(scratch, sanctum_sm_hash, 64);
-  memcpy(scratch + 64, sanctum_sm_public_key, FALCON_PUBKEY_SIZE(LOGN_PARAM));
+  memcpy(scratch + 64, sanctum_sm_public_key, FALCON_PK_SIZE);
 
   // Sign (H_SM, PK_SM) with SK_D
-  falcon_sign_dyn(&rng, sanctum_sm_signature, &sig_len, FALCON_SIG_CT, _sanctum_dev_secret_key, FALCON_PRIVKEY_SIZE(LOGN_PARAM), scratch, 64 + FALCON_PUBKEY_SIZE(LOGN_PARAM), tmp_sig, falcon_tmpsign_size_test);
+  falcon_sign_dyn(&rng, sanctum_sm_signature, &sig_len, FALCON_SIG_CT, _sanctum_dev_secret_key, FALCON_SK_SIZE, scratch, 64 + FALCON_PK_SIZE, tmp_sig, falcon_tmpsign_size_test);
 
   // Clean up
   //memcpy(sanctum_sm_signature, sanctum_sm_signature_test, sizeof(*sanctum_sm_signature_test));
-  memset((void*)sanctum_dev_secret_key, 0, sizeof(*sanctum_dev_secret_key));
+  memset((void*)_sanctum_dev_secret_key, 0, sizeof(*_sanctum_dev_secret_key));
   memset((void *)sanctum_device_root_key_priv, 0, sizeof(*sanctum_device_root_key_priv));
   
   // caller will clean core state and memory (including the stack), and boot.

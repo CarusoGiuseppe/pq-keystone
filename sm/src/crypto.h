@@ -7,7 +7,6 @@
 
 #include <sbi/sbi_types.h>
 #include "sha3/sha3.h"
-#include "ed25519/ed25519.h"
 #include "hkdf_sha3_512/hkdf_sha3_512.h"
 #include "falcon512_sm/falcon.h"
 
@@ -41,6 +40,20 @@ SIG_CT SIZE: 1577
 #define FALCON_1024_PK_SIZE 1793
 #define FALCON_1024_SK_SIZE 2305
 #define FALCON_1024_SIG_SIZE 1577
+
+#if LOGN_PARAM == 9
+
+#define FALCON_PK_SIZE FALCON_512_PK_SIZE
+#define FALCON_SK_SIZE FALCON_512_SK_SIZE
+#define FALCON_SIG_SIZE FALCON_512_SIG_SIZE
+
+#else
+
+#define FALCON_PK_SIZE FALCON_1024_PK_SIZE
+#define FALCON_SK_SIZE FALCON_1024_SK_SIZE
+#define FALCON_SIG_SIZE FALCON_1024_SIG_SIZE
+
+#endif
 /********************************/
 
 typedef unsigned char byte;

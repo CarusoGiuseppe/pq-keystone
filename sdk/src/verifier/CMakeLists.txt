@@ -7,12 +7,6 @@ set(SOURCE_FILES
     json11.cpp
     keys.cpp
     Report.cpp
-    ed25519/fe.c
-    ed25519/ge.c
-    ed25519/keypair.c
-    ed25519/sc.c
-    ed25519/sign.c
-    ed25519/verify.c
     falcon512/codec.c
     falcon512/common.c
     falcon512/falcon.c

@@ -22,10 +22,10 @@
 
 /* from Sanctum BootROM */
 extern byte sanctum_sm_hash[MDSIZE];
-extern byte sanctum_sm_signature[809];
-extern byte sanctum_sm_secret_key[1281];
-extern byte sanctum_sm_public_key[897];
-extern byte sanctum_ECASM_priv[1281];
+extern byte sanctum_sm_signature[FALCON_SIG_SIZE];
+extern byte sanctum_sm_secret_key[FALCON_SK_SIZE];
+extern byte sanctum_sm_public_key[FALCON_PK_SIZE];
+extern byte sanctum_ECASM_priv[FALCON_SK_SIZE];
 
 /* 
 _FALCON 512_
@@ -53,13 +53,13 @@ byte CDI[64] = { 0, };
 byte cert_sm[2065] = { 0, };
 byte cert_root[1883] = { 0, };
 byte cert_man[1903] = { 0, };
-byte ECASM_priv[FALCON_512_SK_SIZE]= { 0, };
-byte ECASM_pk[FALCON_512_PK_SIZE] = { 0, };
+byte ECASM_priv[FALCON_SK_SIZE]= { 0, };
+byte ECASM_pk[FALCON_PK_SIZE] = { 0, };
 byte sm_hash[MDSIZE] = { 0, };
-byte sm_signature[FALCON_512_SIG_SIZE] = { 0, };
-byte sm_public_key[FALCON_512_PK_SIZE] = { 0, };
-byte sm_private_key[FALCON_512_SK_SIZE] = { 0, };
-byte dev_public_key[FALCON_512_PK_SIZE] = { 0, };
+byte sm_signature[FALCON_SIG_SIZE] = { 0, };
+byte sm_public_key[FALCON_PK_SIZE] = { 0, };
+byte sm_private_key[FALCON_SK_SIZE] = { 0, };
+byte dev_public_key[FALCON_PK_SIZE] = { 0, };
 byte tmp[FALCON_TMPSIZE_SIGNDYN(LOGN_PARAM)];
 byte hash_for_verification[64];
 
@@ -230,7 +230,7 @@ int sm_derive_sealing_key(unsigned char *key, const unsigned char *key_ident,
    * available to generate the salt.
    */
   return kdf(NULL, 0,
-             (const unsigned char *)sm_private_key, FALCON_512_SK_SIZE,
+             (const unsigned char *)sm_private_key, FALCON_SK_SIZE,
              info, MDSIZE + key_ident_size, key, SEALING_KEY_SIZE); //do we need post quantum solution
 }
 
@@ -239,10 +239,10 @@ void sm_copy_key()
   /********************COPY VARIABLES FROM BOOTROM TO SM**********************/
 
   sbi_memcpy(sm_hash, sanctum_sm_hash, MDSIZE);
-  sbi_memcpy(sm_signature, sanctum_sm_signature, FALCON_512_SIG_SIZE);
-  sbi_memcpy(sm_public_key, sanctum_sm_public_key, FALCON_512_PK_SIZE);
-  sbi_memcpy(sm_private_key, sanctum_sm_secret_key, FALCON_512_SK_SIZE);
-  sbi_memcpy(ECASM_priv, sanctum_ECASM_priv, FALCON_512_SK_SIZE);
+  sbi_memcpy(sm_signature, sanctum_sm_signature, FALCON_SIG_SIZE);
+  sbi_memcpy(sm_public_key, sanctum_sm_public_key, FALCON_PK_SIZE);
+  sbi_memcpy(sm_private_key, sanctum_sm_secret_key, FALCON_SK_SIZE);
+  sbi_memcpy(ECASM_priv, sanctum_ECASM_priv, FALCON_SK_SIZE);
   sbi_memcpy(CDI, sanctum_CDI, 64);
   sbi_memcpy(cert_sm, sanctum_cert_sm, sanctum_length_cert);
   sbi_memcpy(cert_root, sanctum_cert_root, sanctum_length_cert_root);
@@ -350,16 +350,16 @@ void sm_copy_key()
 
     /************************EXTRACT PUBLIC KEYS FROM CERTIFICATES*************************/
 
-    sbi_memcpy(dev_public_key, uff_cert_man.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE);
-    sbi_memcpy(ECASM_pk, uff_cert_sm.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE);
+    sbi_memcpy(dev_public_key, uff_cert_man.pk.pk_ctx.pub_key, FALCON_PK_SIZE);
+    sbi_memcpy(ECASM_pk, uff_cert_sm.pk.pk_ctx.pub_key, FALCON_PK_SIZE);
     sbi_printf("[SM] Public Keys extracted from certs generated in the bootrom\n");
     
     sbi_printf("\nMANUFACTURER PUBLIC KEY:\n");
-    base64_encode(uff_cert_man.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE, 0);
+    base64_encode(uff_cert_man.pk.pk_ctx.pub_key, FALCON_PK_SIZE, 0);
     sbi_printf("\nECA SM PUBLIC KEY:\n");
-    base64_encode(uff_cert_sm.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE, 0);
+    base64_encode(uff_cert_sm.pk.pk_ctx.pub_key, FALCON_PK_SIZE, 0);
     sbi_printf("\nDEVICE ROOT PUBLIC KEY:\n");
-    base64_encode(uff_cert_root.pk.pk_ctx.pub_key, FALCON_512_PK_SIZE, 0);
+    base64_encode(uff_cert_root.pk.pk_ctx.pub_key, FALCON_PK_SIZE, 0);
     
 }
 

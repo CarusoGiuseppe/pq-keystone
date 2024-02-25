@@ -8,26 +8,25 @@
 #include <string>
 #include "Keys.hpp"
 #include "common/sha3.h"
-#include "ed25519/ed25519.h"
 #include "verifier/json11.h"
 
 struct enclave_report_t {
   byte hash[MDSIZE];
   uint64_t data_len;
   byte data[ATTEST_DATA_MAXLEN];
-  byte signature[FALCON_512_SIG_SIZE];
+  byte signature[FALCON_SIG_SIZE];
 };
 
 struct sm_report_t {
   byte hash[MDSIZE];
-  byte public_key[FALCON_512_PK_SIZE];
-  byte signature[FALCON_512_SIG_SIZE];
+  byte public_key[FALCON_PK_SIZE];
+  byte signature[FALCON_SIG_SIZE];
 };
 
 struct report_t {
   struct enclave_report_t enclave;
   struct sm_report_t sm;
-  byte dev_public_key[FALCON_512_PK_SIZE];
+  byte dev_public_key[FALCON_PK_SIZE];
 };
 
 class Report {
