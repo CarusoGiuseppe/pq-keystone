@@ -191,9 +191,9 @@ int bootloader() {
   falcon_sign_dyn(&rng, sanctum_sm_sign, &sig_len, FALCON_SIG_CT, _sanctum_dev_secret_key, FALCON_SK_SIZE, sanctum_sm_hash, 64, tmp_sig, falcon_tmpsign_size_test);
 
   // Measure SM to verify the signature
-  sha3_init(&hash_ctx, 64);
-  sha3_update(&hash_ctx, (void *)DRAM_BASE, sanctum_sm_size);
-  sha3_final(sanctum_sm_hash, &hash_ctx);
+  //sha3_init(&hash_ctx, 64);
+  //sha3_update(&hash_ctx, (void *)DRAM_BASE, sanctum_sm_size);
+  //sha3_final(sanctum_sm_hash, &hash_ctx);
   if((falcon_verify(sanctum_sm_sign, sig_len, FALCON_SIG_CT, _sanctum_dev_public_key, FALCON_PK_SIZE, sanctum_sm_hash, 64, tmp_vrfy, falcon_tmpvrfy_size_test)) != 0)
   {
     // The return value of the bootloader function is used to check if the secure boot is gone well or not
